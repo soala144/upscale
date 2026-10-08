@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Check,
   CircleDollarSign,
+  ExternalLink,
   LoaderCircle,
   MessageCircle,
   Radio,
@@ -367,6 +368,81 @@ export function OnboardingWizard() {
               </div>
             ) : (
               <div className="grid gap-4">
+                <section
+                  aria-labelledby="telegram-token-help-title"
+                  className="rounded-xl border border-border bg-surface-muted p-4 sm:p-5"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3
+                        id="telegram-token-help-title"
+                        className="font-semibold text-foreground"
+                      >
+                        Get a bot token from BotFather
+                      </h3>
+                      <p className="mt-1 text-sm leading-6 text-muted">
+                        Telegram issues a private API token for each bot. Create
+                        one for your business or retrieve the token for a bot
+                        you already own.
+                      </p>
+                    </div>
+                    <a
+                      href="https://t.me/BotFather"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm font-semibold text-foreground hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      Open BotFather
+                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    </a>
+                  </div>
+                  <ol className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <li className="flex gap-3 rounded-lg border border-border bg-surface p-3">
+                      <span className="grid size-6 shrink-0 place-items-center rounded-full bg-success-foreground text-xs font-semibold text-success">
+                        1
+                      </span>
+                      <span className="text-sm leading-5 text-muted">
+                        In Telegram, open the official{" "}
+                        <span className="font-medium text-foreground">
+                          @BotFather
+                        </span>{" "}
+                        account and send <code className="font-mono text-foreground">/newbot</code>.
+                      </span>
+                    </li>
+                    <li className="flex gap-3 rounded-lg border border-border bg-surface p-3">
+                      <span className="grid size-6 shrink-0 place-items-center rounded-full bg-success-foreground text-xs font-semibold text-success">
+                        2
+                      </span>
+                      <span className="text-sm leading-5 text-muted">
+                        Follow the prompts for a display name and a unique
+                        username ending in <code className="font-mono text-foreground">bot</code>.
+                      </span>
+                    </li>
+                    <li className="flex gap-3 rounded-lg border border-border bg-surface p-3">
+                      <span className="grid size-6 shrink-0 place-items-center rounded-full bg-success-foreground text-xs font-semibold text-success">
+                        3
+                      </span>
+                      <span className="text-sm leading-5 text-muted">
+                        Copy the API token BotFather sends you, then paste it
+                        into the field below.
+                      </span>
+                    </li>
+                    <li className="flex gap-3 rounded-lg border border-border bg-surface p-3">
+                      <span className="grid size-6 shrink-0 place-items-center rounded-full bg-success-foreground text-xs font-semibold text-success">
+                        4
+                      </span>
+                      <span className="text-sm leading-5 text-muted">
+                        Already have a bot? Send <code className="font-mono text-foreground">/mybots</code>{" "}
+                        to BotFather, choose the bot, then open <span className="font-medium text-foreground">API Token</span>.
+                      </span>
+                    </li>
+                  </ol>
+                  <p className="mt-4 border-t border-border pt-3 text-xs leading-5 text-muted">
+                    Keep the token private. Anyone with it can control your bot.
+                    If it has been exposed, revoke or regenerate it with
+                    BotFather before connecting.
+                  </p>
+                </section>
                 <TextInput label="Telegram bot token" name="botToken" type="password" autoComplete="off" value={botToken} onChange={(e) => { setBotToken(e.target.value); setFieldErrors((current) => ({ ...current, botToken: "" })); }} placeholder="Paste the token from BotFather" required error={fieldErrors.botToken} />
                 <p className="-mt-2 text-xs text-muted">The token is held only until submission. It is not saved in browser storage.</p>
               </div>

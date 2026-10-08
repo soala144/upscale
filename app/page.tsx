@@ -17,9 +17,10 @@ import {
 } from "lucide-react";
 
 import { SiteNav } from "@/components/marketing/site-nav";
+import { BrandLogo } from "@/components/brand-logo";
 
 export const metadata: Metadata = {
-  title: "Turn conversations into customers",
+  title: "UPSCALE — Turn conversations into customers",
   description:
     "UPSCALE qualifies incoming leads, identifies buying intent and gives sales a clear path to convert serious prospects.",
 };
@@ -355,7 +356,9 @@ export default function Home() {
       </main>
       <footer className="border-t border-border bg-surface py-8">
         <div className="container-page flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <Link href="/" className="text-sm font-extrabold tracking-[0.14em]">UPSCALE</Link>
+          <Link href="/" aria-label="UPSCALE home">
+            <BrandLogo />
+          </Link>
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
             <a href="#product" className="hover:text-foreground">Product</a>
             <a href="#pricing" className="hover:text-foreground">Pricing</a>

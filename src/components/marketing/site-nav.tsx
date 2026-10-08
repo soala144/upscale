@@ -4,6 +4,8 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 
+import { BrandLogo } from "@/components/brand-logo";
+
 export function SiteNav() {
   const [open, setOpen] = useState(false);
   const links = [
@@ -19,11 +21,8 @@ export function SiteNav() {
         className="container-page flex min-h-[4.25rem] items-center justify-between"
         aria-label="Main navigation"
       >
-        <Link href="/" className="flex items-center gap-2.5" aria-label="UPSCALE home">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-xs font-black tracking-tight text-primary-foreground">
-            U
-          </span>
-          <span className="text-sm font-extrabold tracking-[0.14em]">UPSCALE</span>
+        <Link href="/" aria-label="UPSCALE home">
+          <BrandLogo />
         </Link>
 
         <div className="hidden items-center gap-7 md:flex">

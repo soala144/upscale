@@ -16,6 +16,7 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { authClient } from "@/lib/auth/client";
 import { InlineNotice, Skeleton } from "@/components/ui/primitives";
+import { BrandLogo } from "@/components/brand-logo";
 
 const navigation = [
   { href: "/overview", label: "Overview", icon: LayoutDashboard },
@@ -69,9 +70,8 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 border-b border-border bg-surface">
         <div className="container-page flex min-h-16 items-center justify-between gap-4">
-          <Link href="/overview" className="flex items-center gap-2.5" aria-label="UPSCALE overview">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-xs font-black text-primary-foreground">U</span>
-            <span className="text-sm font-extrabold tracking-[0.14em]">UPSCALE</span>
+          <Link href="/overview" aria-label="UPSCALE overview">
+            <BrandLogo />
           </Link>
           <div className="hidden min-w-0 flex-1 md:block">
             <p className="truncate text-sm font-semibold">{session.data.user.name}</p>

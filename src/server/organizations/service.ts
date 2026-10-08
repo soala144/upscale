@@ -79,10 +79,7 @@ export async function createOrganization(
       return organization;
     });
   } catch (error) {
-    if (
-      isPostgresUniqueViolation(error) &&
-      error.constraint === "organizations_slug_uidx"
-    ) {
+    if (isOrganizationSlugConflict(error)) {
       throw new OrganizationSlugConflictError();
     }
 
@@ -194,10 +191,7 @@ export async function updateOrganization(
 
     return organization ?? null;
   } catch (error) {
-    if (
-      isPostgresUniqueViolation(error) &&
-      error.constraint === "organizations_slug_uidx"
-    ) {
+    if (isOrganizationSlugConflict(error)) {
       throw new OrganizationSlugConflictError();
     }
 
@@ -225,12 +219,23 @@ function toOrganizationResponse(
   };
 }
 
-function isPostgresUniqueViolation(
-  error: unknown,
-): error is Error & { code: "23505"; constraint?: string } {
-  return (
-    error instanceof Error &&
-    "code" in error &&
-    error.code === "23505"
-  );
+export function isOrganizationSlugConflict(error: unknown): boolean {
+  const seen = new Set<Error>();
+  let current = error;
+
+  while (current instanceof Error && !seen.has(current)) {
+    seen.add(current);
+    if (
+      "code" in current &&
+      current.code === "23505" &&
+      "constraint" in current &&
+      current.constraint === "organizations_slug_uidx"
+    ) {
+      return true;
+    }
+
+    current = "cause" in current ? current.cause : undefined;
+  }
+
+  return false;
 }

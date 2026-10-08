@@ -17,6 +17,7 @@ import {
   organizations,
 } from "@/db/schema/organizations";
 import { getServerEnv } from "@/lib/env/server";
+import { getErrorName, logger as appLogger } from "@/server/logging";
 
 const env = getServerEnv();
 
@@ -24,6 +25,24 @@ export const auth = betterAuth({
   appName: "UPSCALE",
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
+  logger: {
+    level: "warn",
+    log: (level, _message, ...args) => {
+      const error = args.find(
+        (argument): argument is Error => argument instanceof Error,
+      );
+      const context = {
+        severity: level,
+        ...(error ? { errorName: getErrorName(error) } : {}),
+      };
+
+      if (level === "error") {
+        appLogger.error("better_auth.internal", context);
+      } else if (level === "warn") {
+        appLogger.warn("better_auth.internal", context);
+      }
+    },
+  },
   trustedOrigins: [env.BETTER_AUTH_URL],
   database: drizzleAdapter(getDatabase(), {
     provider: "pg",
