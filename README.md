@@ -20,6 +20,15 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## AI provider
+
+Conversation qualification uses the server-side OpenAI API. Set `OPENAI_API_KEY`
+in `.env` for local development and in the deployment environment. `OPENAI_MODEL`
+defaults to `gpt-4.1-mini`; the browser never receives the API key or chooses the
+model. If the key is missing or the provider request fails, Telegram conversations
+receive a safe fallback reply and the failure is recorded without conversation
+contents or credentials.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

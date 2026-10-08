@@ -20,7 +20,7 @@ import {
 import { processTelegramUpdate } from "@/server/telegram/webhook-service";
 import { createCustomerCheckout } from "@/server/payments/service";
 
-process.env.ANTHROPIC_API_KEY = "test-anthropic-key";
+process.env.OPENAI_API_KEY = "test-openai-key";
 process.env.BACHS_WEBHOOK_SECRET = "test-bachs-webhook-secret";
 process.env.BACHS_API_KEY = "sk_sandbox_test";
 process.env.BACHS_ENV = "sandbox";
@@ -39,7 +39,7 @@ test(
     const token = "123456:test-telegram-token";
     const encryptedToken = encryptTelegramToken(token);
     const originalFetch = globalThis.fetch;
-    let anthropicCalls = 0;
+    let openAICalls = 0;
     let telegramCalls = 0;
 
     t.after(async () => {
@@ -82,40 +82,48 @@ test(
 
     globalThis.fetch = async (input, init) => {
       const url = String(input);
-      if (url === "https://api.anthropic.com/v1/messages") {
-        anthropicCalls += 1;
+      if (url === "https://api.openai.com/v1/responses") {
+        openAICalls += 1;
         const requestBody = JSON.parse(String(init?.body)) as {
-          system: string;
+          instructions: string;
+          model: string;
         };
-        assert.match(requestBody.system, /Integration Test Homes/);
-        assert.match(requestBody.system, /Focus on homes in Lagos/);
+        assert.equal(requestBody.model, "gpt-4.1-mini");
+        assert.match(requestBody.instructions, /Integration Test Homes/);
+        assert.match(requestBody.instructions, /Focus on homes in Lagos/);
 
         return Response.json({
-          id: "msg_integration",
-          type: "message",
-          role: "assistant",
-          model: "claude-sonnet-5-5",
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({
-                reply: "What kind of home are you looking for?",
-                qualification: {
-                  need: "A home",
-                  budget: null,
-                  location: "Lagos",
-                  timeline: null,
-                  decision_maker: null,
-                },
-                summary: "Looking for a home in Lagos.",
-                human_requested: false,
-                handoff_required: false,
-              }),
-            },
-          ],
-          stop_reason: "end_turn",
-          stop_sequence: null,
-          usage: { input_tokens: 10, output_tokens: 20 },
+          id: "resp_integration",
+          object: "response",
+          created_at: 1_759_843_200,
+          status: "completed",
+          model: "gpt-4.1-mini",
+          output: [{
+            id: "msg_integration",
+            type: "message",
+            status: "completed",
+            role: "assistant",
+            content: [
+              {
+                type: "output_text",
+                annotations: [],
+                text: JSON.stringify({
+                  reply: "What kind of home are you looking for?",
+                  qualification: {
+                    need: "A home",
+                    budget: null,
+                    location: "Lagos",
+                    timeline: null,
+                    decision_maker: null,
+                  },
+                  summary: "Looking for a home in Lagos.",
+                  human_requested: false,
+                  handoff_required: false,
+                }),
+              },
+            ],
+          }],
+          usage: { input_tokens: 10, output_tokens: 20, total_tokens: 30 },
         });
       }
 
@@ -195,7 +203,7 @@ test(
       true,
       JSON.stringify({
         firstResult,
-        anthropicCalls,
+        openAICalls,
         telegramCalls,
       }),
     );
@@ -226,7 +234,7 @@ test(
       savedMessages.map((message) => message.role).sort(),
       ["ASSISTANT", "USER"],
     );
-    assert.equal(anthropicCalls, 1);
+    assert.equal(openAICalls, 1);
     assert.equal(telegramCalls, 1);
 
     const checkout = await createCustomerCheckout(organizationId, {

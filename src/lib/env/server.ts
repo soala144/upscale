@@ -23,7 +23,8 @@ const serverEnvironmentSchema = z
       ),
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.string().url(),
-    ANTHROPIC_API_KEY: optionalEnvironmentValue,
+    OPENAI_API_KEY: optionalEnvironmentValue,
+    OPENAI_MODEL: z.string().trim().min(1).default("gpt-4.1-mini"),
     TELEGRAM_BOT_TOKEN_ENCRYPTION_KEY: z
       .string()
       .regex(/^[\da-f]{64}$/i, "must be a 32-byte hex-encoded key"),

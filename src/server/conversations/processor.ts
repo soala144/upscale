@@ -10,7 +10,7 @@ import { messages } from "@/db/schema/messages";
 import { organizations } from "@/db/schema/organizations";
 import { telegramUpdates } from "@/db/schema/telegram-updates";
 import { scoreLead } from "@/lib/scoring/scoreLead";
-import { generateQualificationReply } from "@/server/ai/claude";
+import { generateQualificationReply } from "@/server/ai";
 import { trackEvent } from "@/server/integrations/watchup";
 
 export async function processConversationMessage(input: {
@@ -238,7 +238,8 @@ export async function processConversationMessage(input: {
 
   if (
     context.conversation.aiPaused ||
-    context.conversation.status !== "ACTIVE"
+    context.conversation.status !== "ACTIVE" ||
+    context.lead.handedOff
   ) {
     return {
       leadId: context.lead.id,

@@ -1,10 +1,10 @@
 import "server-only";
 
-import { initWatchup } from "@watchupltd/nextjs/server";
+import { Watchup } from "@watchupltd/node";
 
 import { getErrorName, logger } from "@/server/logging";
 
-type WatchupClient = ReturnType<typeof initWatchup>;
+type WatchupClient = Watchup;
 type EndTrace = ReturnType<WatchupClient["startTrace"]>;
 type RequestHandler<Arguments extends unknown[]> = (
   request: Request,
@@ -30,9 +30,11 @@ export function initializeWatchup(apiKey?: string): WatchupClient | undefined {
     return undefined;
   }
 
-  client = initWatchup({
+  client = new Watchup({
     apiKey: configuredApiKey,
     environment: process.env.NODE_ENV ?? "development",
+    release: process.env.GIT_SHA,
+    service: "upscale",
   });
 
   return client;
@@ -59,12 +61,16 @@ export function trackRequest<Arguments extends unknown[]>(
 
     try {
       const response = await handler(request, ...args);
-      finishTrace(endTrace, response.status >= 500 ? "err" : "ok", route, {
-        statusCode: response.status,
-      });
+      const status =
+        response.status >= 500
+          ? "err"
+          : response.status >= 400
+            ? "warn"
+            : "ok";
+      finishTrace(endTrace, status, response.status, route);
       return response;
     } catch (error) {
-      finishTrace(endTrace, "err", route);
+      finishTrace(endTrace, "err", 500, route);
       captureRequestError(error, route);
       throw error;
     }
@@ -76,7 +82,7 @@ function startTrace(
   route: string,
 ): EndTrace | undefined {
   try {
-    return watchup.startTrace(route);
+    return watchup.startTrace(route, { type: "http" });
   } catch (error) {
     logger.warn("watchup.trace.start.failed", {
       area: route,
@@ -88,16 +94,16 @@ function startTrace(
 
 function finishTrace(
   endTrace: EndTrace | undefined,
-  status: "ok" | "err",
+  status: "ok" | "warn" | "err",
+  statusCode: number,
   route: string,
-  meta?: Record<string, unknown>,
 ): void {
   if (!endTrace) {
     return;
   }
 
   try {
-    endTrace({ status, meta });
+    endTrace({ status, statusCode, meta: { route } });
   } catch (error) {
     logger.warn("watchup.trace.finish.failed", {
       area: route,

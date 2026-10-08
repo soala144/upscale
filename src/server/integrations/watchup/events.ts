@@ -10,6 +10,7 @@ export type WatchupEventProperties = Record<
 
 const sensitivePropertyName =
   /(authorization|token|secret|password|credential|conversation|message|content|email|phone)/i;
+const safeTokenCountPropertyName = /^(input|output|total)_tokens$/;
 
 export function trackEvent(
   name: string,
@@ -20,8 +21,15 @@ export function trackEvent(
     return;
   }
 
-  const unsafeProperty = Object.keys(properties).find((key) =>
-    sensitivePropertyName.test(key),
+  const unsafeProperty = Object.entries(properties).find(
+    ([key, value]) =>
+      sensitivePropertyName.test(key) &&
+      !(
+        safeTokenCountPropertyName.test(key) &&
+        typeof value === "number" &&
+        Number.isSafeInteger(value) &&
+        value >= 0
+      ),
   );
 
   if (unsafeProperty) {

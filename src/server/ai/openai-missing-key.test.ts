@@ -1,15 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { generateQualificationReply } from "./claude";
+import { generateQualificationReply } from "./qualification";
 
-delete process.env.ANTHROPIC_API_KEY;
+delete process.env.OPENAI_API_KEY;
 process.env.DATABASE_URL = "postgres://localhost/upscale_test";
 process.env.BETTER_AUTH_SECRET = "test-better-auth-secret-that-is-long-enough";
 process.env.BETTER_AUTH_URL = "http://localhost:3000";
 process.env.TELEGRAM_BOT_TOKEN_ENCRYPTION_KEY = "a".repeat(64);
 
-test("returns a safe response when Anthropic is not configured", async () => {
+test("returns a safe response when OpenAI is not configured", async () => {
   const result = await generateQualificationReply({
     organization: {
       id: "org-test",

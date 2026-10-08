@@ -135,7 +135,7 @@ export function IntegrationsPage() {
         <Card className="p-5 sm:p-6 lg:col-span-2">
           <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-lg bg-surface-muted text-primary"><Radio className="h-5 w-5" /></span><div><h2 className="font-semibold">System health</h2><p className="mt-1 text-sm text-muted">Public health endpoint reports API and database availability.</p></div></div>
           {health ? <div className="mt-5 grid gap-3 sm:grid-cols-3"><HealthItem label="API" healthy={health.status === "ok"} /><HealthItem label="Database" healthy={health.database === "ok"} /><div className="rounded-lg border border-border p-4"><p className="text-xs text-muted">Checked</p><p className="mt-1 text-sm font-medium">{new Date(health.timestamp).toLocaleString()}</p></div></div> : <p className="mt-5 text-sm text-muted">Health details unavailable.</p>}
-          <p className="mt-4 text-xs text-muted">The backend does not expose provider-specific health probes for Claude, Telegram, or Bachs.</p>
+          <p className="mt-4 text-xs text-muted">The backend reports whether the AI provider is configured, but does not make a live provider health request.</p>
         </Card>
       </div>
     </>

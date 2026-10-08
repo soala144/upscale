@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 
 import { getDatabase } from "@/db";
+import { getServerEnv } from "@/lib/env/server";
 import { captureError, trackRequest } from "@/server/integrations/watchup";
 import { getErrorName, logger } from "@/server/logging";
 
@@ -14,6 +15,7 @@ export const GET = trackRequest("api.health", async () => {
       status: "ok",
       service: "upscale",
       database: "ok",
+      ai: getServerEnv().OPENAI_API_KEY ? "configured" : "unconfigured",
       timestamp,
     });
   } catch (error) {

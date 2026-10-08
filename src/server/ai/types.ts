@@ -8,7 +8,7 @@ export const qualificationSchema = z.object({
   decision_maker: z.boolean().nullable(),
 });
 
-export const claudeQualificationResponseSchema = z.object({
+export const qualificationResponseSchema = z.object({
   reply: z.string().min(1).max(4_000),
   qualification: qualificationSchema,
   summary: z.string().max(2_000),
@@ -16,8 +16,8 @@ export const claudeQualificationResponseSchema = z.object({
   handoff_required: z.boolean(),
 });
 
-export type ClaudeQualificationResponse = z.infer<
-  typeof claudeQualificationResponseSchema
+export type QualificationResponse = z.infer<
+  typeof qualificationResponseSchema
 >;
 
 export type ConversationHistoryItem = {
@@ -25,7 +25,7 @@ export type ConversationHistoryItem = {
   content: string;
 };
 
-export type ClaudeLeadContext = {
+export type LeadContext = {
   need: string | null;
   budget: string | null;
   location: string | null;
@@ -33,7 +33,7 @@ export type ClaudeLeadContext = {
   decisionMaker: boolean | null;
 };
 
-export type ClaudeOrganizationContext = {
+export type OrganizationContext = {
   id: string;
   name: string;
   industry: string | null;

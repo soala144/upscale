@@ -34,8 +34,14 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
       if (result.error) {
         if (!isSignUp && result.error.status === 401) {
           setError("Email or password is incorrect. Check your details and try again.");
-        } else if (isSignUp && result.error.status === 409) {
-          setError("An account with this email already exists. Sign in or use another email address.");
+        } else if (isSignUp && result.error.status === 422) {
+          setError(
+            "We couldn't create the account. This email may already be registered; try signing in, or use another email address.",
+          );
+        } else if (result.error.status >= 500) {
+          setError(
+            "The service is temporarily unavailable. Please try again shortly.",
+          );
         } else {
           setError("We couldn't complete your request. Check your details and try again.");
         }

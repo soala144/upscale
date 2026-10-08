@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildQualificationPrompt } from "./prompts";
-import { claudeQualificationResponseSchema } from "./types";
+import { buildQualificationInstructions } from "./prompts";
+import { qualificationResponseSchema } from "./types";
 
 const lead = {
   need: null,
@@ -13,7 +13,7 @@ const lead = {
 };
 
 test("qualification prompt contains only the current organization's context", () => {
-  const prompt = buildQualificationPrompt(
+  const prompt = buildQualificationInstructions(
     {
       id: "org-a",
       name: "Aster Homes",
@@ -31,7 +31,7 @@ test("qualification prompt contains only the current organization's context", ()
 });
 
 test("qualification response schema enforces the structured response shape", () => {
-  const parsed = claudeQualificationResponseSchema.safeParse({
+  const parsed = qualificationResponseSchema.safeParse({
     reply: "What kind of home are you looking for?",
     qualification: {
       need: "A two-bedroom home",
@@ -47,7 +47,7 @@ test("qualification response schema enforces the structured response shape", () 
 
   assert.equal(parsed.success, true);
   assert.equal(
-    claudeQualificationResponseSchema.safeParse({
+    qualificationResponseSchema.safeParse({
       reply: "Interested",
       qualification: {
         need: null,
