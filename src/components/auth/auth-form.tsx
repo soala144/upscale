@@ -52,7 +52,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         selectedPlan === "BASIC" || selectedPlan === "GROWTH" || selectedPlan === "SCALE"
           ? `?plan=${selectedPlan}`
           : "";
-      router.replace(isSignUp ? `/onboarding${onboardingPlan}` : "/overview");
+      router.replace(`/onboarding${isSignUp ? onboardingPlan : ""}`);
       router.refresh();
     } catch {
       setError("We couldn't reach the service. Check your connection and try again.");

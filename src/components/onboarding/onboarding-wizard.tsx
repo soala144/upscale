@@ -87,6 +87,13 @@ export function OnboardingWizard() {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loaded, setLoaded] = useState(false);
+  const [loadedOrganizationId, setLoadedOrganizationId] = useState<
+    string | null
+  >(null);
+  const [resolvingWorkspace, setResolvingWorkspace] = useState(true);
+  const [availableOrganizations, setAvailableOrganizations] = useState<
+    { id: string; name: string }[]
+  >([]);
 
   useEffect(() => {
     if (session.isPending) return;
@@ -94,22 +101,31 @@ export function OnboardingWizard() {
       router.replace("/sign-in");
       return;
     }
-    if (!activeOrganizationId) {
-      return;
-    }
     let active = true;
-    Promise.allSettled([
-      getOrganization(activeOrganizationId),
-      getBachsStatus(),
-      getTelegramStatus(),
-    ]).then(([organizationResult, bachsResult, telegramResult]) => {
+
+    async function loadWorkspace(organizationId: string) {
+      const [organizationResult, bachsResult, telegramResult] =
+        await Promise.allSettled([
+          getOrganization(organizationId),
+          getBachsStatus(),
+          getTelegramStatus(),
+        ]);
       if (!active) return;
       if (organizationResult.status === "rejected") {
         setError(errorText(organizationResult.reason));
+        setLoadedOrganizationId(organizationId);
         setLoaded(true);
+        setResolvingWorkspace(false);
         return;
       }
+
       const org = organizationResult.value;
+      if (org.onboarding?.currentStep === "COMPLETE") {
+        setLoadedOrganizationId(organizationId);
+        router.replace("/overview");
+        return;
+      }
+
       setOrganization(org);
       setBusinessName(org.name);
       setSlug(org.slug);
@@ -119,19 +135,83 @@ export function OnboardingWizard() {
       setAgentPrompt(org.agentPrompt ?? "");
       if (bachsResult.status === "fulfilled") setBachs(bachsResult.value);
       else setError(`Bachs: ${errorText(bachsResult.reason)}`);
-      if (telegramResult.status === "fulfilled") setTelegram(telegramResult.value.connection);
-      else setError(`Telegram: ${errorText(telegramResult.reason)}`);
-      setLoaded(true);
-      setStep(org.onboarding?.currentStep === "CONNECT_TELEGRAM" ? "telegram" :
-        org.onboarding?.currentStep === "CONNECT_BACHS" ? "bachs" : "review");
-    }).catch((reason: unknown) => {
-      if (active) {
-        setError(errorText(reason));
-        setLoaded(true);
+      if (telegramResult.status === "fulfilled") {
+        setTelegram(telegramResult.value.connection);
+      } else {
+        setError(`Telegram: ${errorText(telegramResult.reason)}`);
       }
+      setAvailableOrganizations([]);
+      setLoadedOrganizationId(organizationId);
+      setLoaded(true);
+      setResolvingWorkspace(false);
+      setStep(
+        org.onboarding?.currentStep === "CONNECT_BACHS"
+          ? "bachs"
+          : org.onboarding?.currentStep === "CONNECT_TELEGRAM"
+            ? "telegram"
+            : "review",
+      );
+    }
+
+    async function resumeOnboarding() {
+      if (activeOrganizationId) {
+        await loadWorkspace(activeOrganizationId);
+        return;
+      }
+
+      const organizationsResult = await authClient.organization.list();
+      if (organizationsResult.error) {
+        throw new Error(organizationsResult.error.message);
+      }
+      const organizations = organizationsResult.data ?? [];
+      if (organizations.length === 0) {
+        setAvailableOrganizations([]);
+        setLoaded(true);
+        setResolvingWorkspace(false);
+        return;
+      }
+      if (organizations.length > 1) {
+        setAvailableOrganizations(
+          organizations.map(({ id, name }) => ({ id, name })),
+        );
+        setLoaded(true);
+        setResolvingWorkspace(false);
+        return;
+      }
+
+      const activated = await authClient.organization.setActive({
+        organizationId: organizations[0].id,
+      });
+      if (activated.error) {
+        throw new Error(activated.error.message);
+      }
+      await loadWorkspace(organizations[0].id);
+    }
+
+    resumeOnboarding().catch((reason: unknown) => {
+      if (!active) return;
+      setError(errorText(reason));
+      setLoaded(true);
+      setResolvingWorkspace(false);
     });
     return () => { active = false; };
   }, [activeOrganizationId, router, session.data, session.isPending]);
+
+  async function selectWorkspace(organizationId: string) {
+    setBusy("workspace");
+    setError("");
+    try {
+      const activated = await authClient.organization.setActive({
+        organizationId,
+      });
+      if (activated.error) throw new Error(activated.error.message);
+      router.replace("/onboarding");
+      router.refresh();
+    } catch (reason) {
+      setError(errorText(reason));
+      setBusy("");
+    }
+  }
 
   const stepIndex = useMemo(() => steps.findIndex((item) => item.key === step), [step]);
 
@@ -255,7 +335,13 @@ export function OnboardingWizard() {
     }
   }
 
-  if (session.isPending || !session.data || (Boolean(activeOrganizationId) && !loaded)) {
+  if (
+    session.isPending ||
+    !session.data ||
+    resolvingWorkspace ||
+    (Boolean(activeOrganizationId) &&
+      (loadedOrganizationId !== activeOrganizationId || !loaded))
+  ) {
     return (
       <main className="container-page max-w-4xl py-10">
         <Skeleton className="h-8 w-56" />
@@ -272,6 +358,33 @@ export function OnboardingWizard() {
         <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Build your conversion engine</h1>
         <p className="mt-2 text-sm text-muted">Your setup is saved as you connect your business and channels.</p>
       </div>
+      {availableOrganizations.length > 1 ? (
+        <Card className="p-5 sm:p-8">
+          <h2 className="text-xl font-semibold">Choose a workspace</h2>
+          <p className="mb-6 mt-1 text-sm text-muted">
+            Select a workspace to continue where you left off.
+          </p>
+          <div className="grid gap-3">
+            {availableOrganizations.map((item) => (
+              <Button
+                key={item.id}
+                variant="secondary"
+                disabled={Boolean(busy)}
+                onClick={() => void selectWorkspace(item.id)}
+              >
+                {item.name}
+                {busy === "workspace" ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowRight className="h-4 w-4" />
+                )}
+              </Button>
+            ))}
+          </div>
+          {error ? <div className="mt-5"><InlineNotice>{error}</InlineNotice></div> : null}
+        </Card>
+      ) : (
+        <>
       <ol className="mb-7 grid grid-cols-3 gap-2 sm:grid-cols-6" aria-label="Onboarding progress">
         {steps.map((item, index) => {
           const done = index < stepIndex || (organization && index < 2);
@@ -494,6 +607,8 @@ export function OnboardingWizard() {
           </div>
         ) : null}
       </Card>
+        </>
+      )}
     </main>
   );
 }
