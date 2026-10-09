@@ -10,7 +10,9 @@ export const createBillingCheckoutSchema = z
 
 export const customerCheckoutSchema = z
   .object({
-    leadId: z.string().min(1).max(128),
+    /** Optional: a payment link can be created before or without a lead. */
+    leadId: z.string().min(1).max(128).optional(),
+    description: z.string().trim().min(1).max(120).optional(),
     amount: z
       .number()
       .finite()

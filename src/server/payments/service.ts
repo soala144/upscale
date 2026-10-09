@@ -1,7 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, ne } from "drizzle-orm";
+import { and, desc, eq, ne, sql } from "drizzle-orm";
 
 import { getDatabase } from "@/db";
 import { leads } from "@/db/schema/leads";
@@ -29,7 +29,7 @@ export class CustomerCheckoutError extends Error {
 
 export async function createCustomerCheckout(
   organizationId: string,
-  input: { leadId: string; amount: number },
+  input: { leadId?: string; amount: number; description?: string },
 ) {
   const db = getDatabase();
   const [organization] = await db
@@ -67,27 +67,33 @@ export async function createCustomerCheckout(
     );
   }
 
-  const [lead] = await db
-    .select({
-      id: leads.id,
-      name: leads.name,
-      email: leads.email,
-      stage: leads.stage,
-    })
-    .from(leads)
-    .where(
-      and(
-        eq(leads.id, input.leadId),
-        eq(leads.organizationId, organizationId),
-      ),
-    )
-    .limit(1);
+  let lead:
+    | { id: string; name: string | null; email: string | null; stage: string }
+    | null = null;
+  if (input.leadId) {
+    const [found] = await db
+      .select({
+        id: leads.id,
+        name: leads.name,
+        email: leads.email,
+        stage: leads.stage,
+      })
+      .from(leads)
+      .where(
+        and(
+          eq(leads.id, input.leadId),
+          eq(leads.organizationId, organizationId),
+        ),
+      )
+      .limit(1);
 
-  if (!lead) {
-    throw new CustomerCheckoutError("Lead not found", 404);
-  }
-  if (lead.stage === "CONVERTED") {
-    throw new CustomerCheckoutError("Lead is already converted", 409);
+    if (!found) {
+      throw new CustomerCheckoutError("Lead not found", 404);
+    }
+    if (found.stage === "CONVERTED") {
+      throw new CustomerCheckoutError("Lead is already converted", 409);
+    }
+    lead = found;
   }
 
   const paymentId = randomUUID();
@@ -95,7 +101,7 @@ export async function createCustomerCheckout(
   await db.insert(payments).values({
     id: paymentId,
     organizationId,
-    leadId: lead.id,
+    leadId: lead?.id ?? null,
     type: "CUSTOMER_PURCHASE",
     status: "PENDING",
     amount,
@@ -104,7 +110,10 @@ export async function createCustomerCheckout(
     providerAccountId: organization.bachsAccountId,
     providerReference: paymentId,
     platformFee: "0",
-    metadata: { kind: "customer_purchase" },
+    metadata: {
+      kind: "customer_purchase",
+      ...(input.description ? { description: input.description } : {}),
+    },
   });
 
   const baseUrl = getServerEnv().BETTER_AUTH_URL;
@@ -117,15 +126,15 @@ export async function createCustomerCheckout(
       idempotencyKey: paymentId,
       accountId: organization.bachsAccountId,
       customer: {
-        email: lead.email || undefined,
-        name: lead.name?.trim() || undefined,
+        email: lead?.email || undefined,
+        name: lead?.name?.trim() || undefined,
       },
       successUrl: new URL("/payments", baseUrl).toString(),
       cancelUrl: new URL("/payments", baseUrl).toString(),
       metadata: {
         payment_id: paymentId,
         organization_id: organizationId,
-        lead_id: lead.id,
+        ...(lead ? { lead_id: lead.id } : {}),
       },
     });
   } catch (error) {
@@ -149,25 +158,33 @@ export async function createCustomerCheckout(
       .set({
         checkoutId: checkout.checkoutId,
         providerReference: checkout.reference,
+        // Keep the hosted payment page URL so the link can be copied again later.
+        metadata: {
+          kind: "customer_purchase",
+          ...(input.description ? { description: input.description } : {}),
+          checkoutUrl: checkout.checkoutUrl,
+        },
         updatedAt: new Date(),
       })
       .where(and(eq(payments.id, paymentId), eq(payments.status, "PENDING")));
-    await tx
-      .update(leads)
-      .set({ stage: "PAYMENT_PENDING", updatedAt: new Date() })
-      .where(
-        and(
-          eq(leads.id, lead.id),
-          eq(leads.organizationId, organizationId),
-          ne(leads.stage, "CONVERTED"),
-        ),
-      );
+    if (lead) {
+      await tx
+        .update(leads)
+        .set({ stage: "PAYMENT_PENDING", updatedAt: new Date() })
+        .where(
+          and(
+            eq(leads.id, lead.id),
+            eq(leads.organizationId, organizationId),
+            ne(leads.stage, "CONVERTED"),
+          ),
+        );
+    }
   });
 
   trackEvent("bachs.checkout.created", {
     organizationId,
     paymentType: "CUSTOMER_PURCHASE",
-    leadId: lead.id,
+    leadId: lead?.id ?? null,
     amount: input.amount,
     currency: "NGN",
   });
@@ -192,6 +209,8 @@ export async function listOrganizationPayments(organizationId: string) {
       checkoutId: payments.checkoutId,
       providerReference: payments.providerReference,
       platformFee: payments.platformFee,
+      description: sql<string | null>`${payments.metadata}->>'description'`,
+      checkoutUrl: sql<string | null>`case when ${payments.status} = 'PENDING' then ${payments.metadata}->>'checkoutUrl' else null end`,
       createdAt: payments.createdAt,
       updatedAt: payments.updatedAt,
     })

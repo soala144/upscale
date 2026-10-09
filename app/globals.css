@@ -58,6 +58,7 @@ html {
 
 body {
   min-height: 100vh;
+  font-variant-numeric: tabular-nums;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
@@ -106,8 +107,9 @@ select {
 
 .surface-card {
   border: 1px solid var(--border);
-  border-radius: 0.8rem;
+  border-radius: 0.75rem;
   background: var(--surface);
+  box-shadow: 0 1px 2px rgb(24 34 31 / 4%);
 }
 
 .soft-shadow {

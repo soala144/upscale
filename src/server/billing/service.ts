@@ -78,14 +78,20 @@ export async function createSubscriptionCheckout(
   if (!subscription) {
     throw new BillingStateError("Subscription not found", 404);
   }
+  // Paying during the free trial is allowed (you can upgrade early). Only block a
+  // duplicate payment for the same plan while more than a week of paid time remains.
+  const now0 = new Date();
+  const sevenDays = 7 * 86_400_000;
   if (
-    subscription.status === "TRIALING" &&
-    (!subscription.trialEnd || subscription.trialEnd > new Date())
+    subscription.status === "ACTIVE" &&
+    subscription.plan === planId &&
+    subscription.currentPeriodEnd &&
+    subscription.currentPeriodEnd.getTime() - now0.getTime() > sevenDays
   ) {
-    throw new BillingStateError("Free trial is still active", 409);
-  }
-  if (subscription.status === "ACTIVE") {
-    throw new BillingStateError("Subscription is already active", 409);
+    throw new BillingStateError(
+      "This plan is already active. You can renew in the last 7 days of the period.",
+      409,
+    );
   }
 
   const plan = subscriptionPlans[planId];
@@ -115,8 +121,8 @@ export async function createSubscriptionCheckout(
       reference: paymentId,
       idempotencyKey: paymentId,
       customer,
-      successUrl: new URL("/", baseUrl).toString(),
-      cancelUrl: new URL("/", baseUrl).toString(),
+      successUrl: new URL("/billing?checkout=return", baseUrl).toString(),
+      cancelUrl: new URL("/billing?checkout=cancelled", baseUrl).toString(),
       metadata: {
         payment_id: paymentId,
         organization_id: organizationId,

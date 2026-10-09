@@ -75,3 +75,9 @@ test("sales prompt enforces plain text, short replies, no catalogue dumps and us
   assert.match(named, /one question at a time/i);
   assert.match(buildQualificationInstructions(org, base), /Do not guess one/);
 });
+
+test("prompt does not let broadcast promotions in the chat history count as real offers", () => {
+  const org = { id: "o", name: "Shop", industry: null, description: null, agentName: "Helen", agentPrompt: null };
+  const base = { need: null, budget: null, location: null, timeline: null, decisionMaker: null };
+  assert.match(buildQualificationInstructions(org, base), /broadcast announcements/);
+});

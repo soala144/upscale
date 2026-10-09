@@ -10,6 +10,8 @@ export type Payment = {
   checkoutId: string | null;
   providerReference: string | null;
   platformFee: string;
+  description: string | null;
+  checkoutUrl: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -18,8 +20,9 @@ export const getPayments = async () =>
   (await apiRequest<{ payments: Payment[] }>("/api/payments")).payments;
 
 export const createCustomerCheckout = (input: {
-  leadId: string;
+  leadId?: string;
   amount: number;
+  description?: string;
 }) =>
   apiRequest<{
     paymentId: string;
