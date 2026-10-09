@@ -26,6 +26,8 @@ export type ConversationHistoryItem = {
 };
 
 export type LeadContext = {
+  /** Customer display name (from Telegram or the enquiry form), if known. */
+  name?: string | null;
   need: string | null;
   budget: string | null;
   location: string | null;

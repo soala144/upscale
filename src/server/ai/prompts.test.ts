@@ -63,3 +63,15 @@ test("qualification response schema enforces the structured response shape", () 
     false,
   );
 });
+
+test("sales prompt enforces plain text, short replies, no catalogue dumps and uses the customer's name", () => {
+  const org = { id: "o", name: "Shop", industry: null, description: null, agentName: "Helen", agentPrompt: null };
+  const base = { need: null, budget: null, location: null, timeline: null, decisionMaker: null };
+  const named = buildQualificationInstructions(org, { ...base, name: "Tomiwa Adeyemi" });
+  assert.match(named, /customer's name is Tomiwa\b/);
+  assert.doesNotMatch(named, /Adeyemi/);
+  assert.match(named, /Plain text only/);
+  assert.match(named, /Do not dump the whole catalogue/);
+  assert.match(named, /one question at a time/i);
+  assert.match(buildQualificationInstructions(org, base), /Do not guess one/);
+});

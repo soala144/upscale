@@ -289,6 +289,7 @@ export async function processConversationMessage(input: {
       agentPrompt: organization.agentPrompt,
     },
     lead: {
+      name: currentLead.name,
       need: currentLead.need,
       budget: currentLead.budget,
       location: currentLead.location,
