@@ -15,6 +15,7 @@ import {
 import { TelegramConnectionError } from "@/server/telegram/service";
 import { OrganizationSlugConflictError } from "@/server/organizations/service";
 import { CustomerCheckoutError } from "@/server/payments/service";
+import { LeadInputError } from "@/server/leads/create";
 import { KnowledgeError } from "@/server/knowledge/service";
 import { BroadcastError } from "@/server/broadcast/service";
 import { AppointmentError } from "@/server/appointments/service";
@@ -30,6 +31,13 @@ export function apiErrorResponse(error: unknown, area: string): Response {
   if (error instanceof AppointmentError) {
     return Response.json(
       { error: error.message, conflicts: error.conflicts },
+      { status: error.status },
+    );
+  }
+
+  if (error instanceof LeadInputError) {
+    return Response.json(
+      { error: error.message, existingLeadId: error.existingLeadId },
       { status: error.status },
     );
   }

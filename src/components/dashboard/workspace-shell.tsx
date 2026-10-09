@@ -6,6 +6,7 @@ import {
   Activity,
   BookOpen,
   CalendarDays,
+  Link2,
   Send,
   CreditCard,
   LayoutDashboard,
@@ -24,6 +25,7 @@ import { BrandLogo } from "@/components/brand-logo";
 const navigation = [
   { href: "/overview", label: "Overview", icon: LayoutDashboard },
   { href: "/leads", label: "Leads", icon: UsersRound },
+  { href: "/capture", label: "Lead capture", icon: Link2 },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/broadcast", label: "Broadcast", icon: Send },
   { href: "/knowledge", label: "Knowledge", icon: BookOpen },

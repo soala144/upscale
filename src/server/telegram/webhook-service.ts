@@ -11,6 +11,11 @@ import { telegramUpdates } from "@/db/schema/telegram-updates";
 import { decryptTelegramToken } from "@/lib/crypto/telegram-token";
 import { sendTelegramMessage } from "@/server/integrations/telegram";
 import { processConversationMessage } from "@/server/conversations/processor";
+import { parseStartPayload } from "@/lib/telegram/start";
+import {
+  linkFormLeadToTelegram,
+  tagTelegramLeadSource,
+} from "@/server/leads/telegram-link";
 import {
   isStopKeyword,
   recordTelegramOptOut,
@@ -206,15 +211,35 @@ export async function processTelegramUpdate(
     ]
       .filter(Boolean)
       .join(" ");
+    // Deep-link starts (/start f_<lead> or /start s_<tag>) must not reach the AI as raw text.
+    const start = parseStartPayload(message.text);
+    const telegramUserId = String(message.from.id);
+    if (start && start !== "bare" && start.type === "lead") {
+      await linkFormLeadToTelegram({
+        organizationId: connection.organizationId,
+        connectionId: connection.id,
+        leadId: start.leadId,
+        telegramUserId,
+      });
+    }
+    const content = start
+      ? start !== "bare" && start.type === "lead"
+        ? "Hi, I just filled in your enquiry form."
+        : "Hi"
+      : message.text;
     const processed = await processConversationMessage({
       organizationId: connection.organizationId,
       channel: "TELEGRAM",
-      externalUserId: String(message.from.id),
+      externalUserId: telegramUserId,
       telegramConnectionId: connection.id,
       displayName: displayName || undefined,
-      content: message.text,
+      content,
       updateReceiptId: receipt.id,
     });
+
+    if (start && start !== "bare" && start.type === "source") {
+      await tagTelegramLeadSource(connection.organizationId, telegramUserId, start.tag);
+    }
 
     if (isStopKeyword(message.text)) {
       // The lead exists by now, so the opt-out is recorded even on a first message.

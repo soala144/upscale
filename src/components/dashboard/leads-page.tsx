@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Search, UsersRound } from "lucide-react";
+import { Plus, Search, Upload, UsersRound } from "lucide-react";
 
-import { EmptyState, InlineNotice, PageHeader, Skeleton, StatusBadge } from "@/components/ui/primitives";
+import { AddLeadDialog, ImportLeadsDialog } from "@/components/dashboard/lead-intake-dialogs";
+import { Button, EmptyState, InlineNotice, PageHeader, Skeleton, StatusBadge } from "@/components/ui/primitives";
 import { getLeads, type Lead } from "@/lib/api/leads";
 import { ApiError } from "@/lib/api/client";
 import { stageTone } from "@/components/dashboard/overview-page";
@@ -15,6 +16,8 @@ export function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [stage, setStage] = useState<Lead["stage"] | "ALL">("ALL");
   const [query, setQuery] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -38,7 +41,13 @@ export function LeadsPage() {
 
   return (
     <>
-      <PageHeader title="Leads" description="Review qualification signals and decide which prospects need a follow-up." />
+      <PageHeader
+        title="Leads"
+        description="Review qualification signals and decide which prospects need a follow-up."
+        actions={<div className="flex gap-2"><Button variant="secondary" onClick={() => setImporting(true)}><Upload className="h-4 w-4" aria-hidden="true" /> Import CSV</Button><Button onClick={() => setAdding(true)}><Plus className="h-4 w-4" aria-hidden="true" /> Add lead</Button></div>}
+      />
+      <AddLeadDialog open={adding} onClose={() => setAdding(false)} onCreated={() => void load()} />
+      <ImportLeadsDialog open={importing} onClose={() => setImporting(false)} onImported={() => void load()} />
       {error ? <div className="mb-5"><InlineNotice>{error}</InlineNotice><button type="button" className="mt-3 text-sm font-semibold text-primary underline" onClick={() => void load()}>Try again</button></div> : null}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
         <label className="relative min-w-0 flex-1">
