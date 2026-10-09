@@ -52,8 +52,9 @@ export function parseCsv(text: string): string[][] {
 }
 
 /**
- * Expected header: name,price,description[,available]. A row without a price is
- * imported as a product with no price. Returns items plus per-row problems.
+ * Expected header: name,price,description[,available][,type]. A row without a
+ * price is imported as a product with no price. With a "type" column, rows
+ * marked faq are imported as FAQs (name = question, description = answer). Returns items plus per-row problems.
  */
 export function csvToProducts(text: string) {
   const rows = parseCsv(text);
@@ -68,15 +69,16 @@ export function csvToProducts(text: string) {
     const line = index + 2;
     const rawPrice = (cells[col("price")] ?? "").replace(/[₦,\s]/g, "");
     const price = rawPrice === "" ? null : Number(rawPrice);
+    const isFaq = col("type") >= 0 && (cells[col("type")] ?? "").trim().toLowerCase() === "faq";
     const availableCell = col("available") >= 0 ? (cells[col("available")] ?? "").trim().toLowerCase() : "yes";
     const parsed = knowledgeItemSchema.safeParse({
-      kind: "PRODUCT",
+      kind: isFaq ? "FAQ" : "PRODUCT",
       title: cells[col("name")] ?? "",
       content: cells[col("description")] ?? "",
-      price: price !== null && Number.isFinite(price) ? price : null,
+      price: !isFaq && price !== null && Number.isFinite(price) ? price : null,
       available: !["no", "false", "0", "n"].includes(availableCell),
     });
-    if (price !== null && !Number.isFinite(price)) problems.push(`Row ${line}: price is not a number.`);
+    if (!isFaq && price !== null && !Number.isFinite(price)) problems.push(`Row ${line}: price is not a number.`);
     else if (!parsed.success) problems.push(`Row ${line}: ${parsed.error.issues[0].message}`);
     else items.push(parsed.data);
   });

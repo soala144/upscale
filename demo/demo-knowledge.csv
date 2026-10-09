@@ -1,0 +1,30 @@
+name,price,description,available,type
+Large leather bag,30000,"Handmade full-grain leather tote, 40cm wide. Fits a 15-inch laptop. Brown or black. 1-year stitching warranty.",yes,product
+Small leather handbag,22000,"Compact handbag with zip closure and inner pocket. Brown, black or tan.",yes,product
+Leather backpack,45000,"Padded laptop compartment, waterproof lining, adjustable straps. Black or brown.",yes,product
+Messenger bag,38000,"Crossbody leather messenger with flap closure and brass buckles. Brown only.",yes,product
+Travel duffel bag,55000,"Weekend duffel with shoulder strap and shoe compartment. Brown or black.",yes,product
+Laptop sleeve,15000,"Slim leather sleeve for 13 to 15 inch laptops. Black or brown.",yes,product
+Leather wallet (bifold),12000,"Slim bifold with 6 card slots and a coin pocket. Brown only.",yes,product
+Leather wallet (long),16000,"Long wallet with 12 card slots, phone pocket and zip compartment. Black or brown.",yes,product
+Card holder,6500,"Minimal 4-slot card holder. Available in brown, black, tan and navy.",yes,product
+Passport holder,9000,"Fits passport, boarding pass and two cards. Brown or black.",yes,product
+Leather belt (men),10000,"Full-grain leather belt with a solid brass buckle. Sizes 30 to 44 inches. Brown or black.",yes,product
+Leather belt (women),9000,"Slim leather belt with a gold buckle. Sizes 26 to 36 inches. Black or tan.",yes,product
+Key holder,4500,"Leather key pouch for up to 6 keys. Brown or black.",yes,product
+Leather phone case,8500,"Hand-stitched case for iPhone and Samsung models. Tell us your model when ordering.",yes,product
+Tote bag (custom monogram),42000,"Large tote with your initials hot-stamped in gold. Production takes 5 working days.",yes,product
+Corporate gift set,65000,"Wallet, belt and card holder in a gift box. Minimum order 5 sets. Logo embossing available on request.",yes,product
+Bulk order (5 or more bags),,"Discounts are agreed per order. Price depends on quantity and model. A team member will confirm a quote.",yes,product
+Leather repair service,5000,"Restitching, zip replacement and edge repair. Price varies by damage; this is the starting fee.",yes,product
+Leather jacket,95000,"Genuine leather jacket. Currently out of stock; next batch expected in 3 weeks.",no,product
+How long does delivery take?,,"Within Lagos: 1 to 2 working days. Other states: 3 to 5 working days. You will get a tracking update once your order is dispatched.",yes,faq
+How much is delivery?,,"Lagos delivery is 2,500 naira. Delivery to other states is 4,500 naira. Delivery is free for orders above 100,000 naira.",yes,faq
+How do I pay?,,"You can pay by bank transfer or card through the secure payment link we send in the chat. We start production or dispatch only after payment is confirmed.",yes,faq
+Do you accept returns?,,"Yes, within 7 days if the item is unused and in its original packaging. Custom and monogrammed items cannot be returned unless they are faulty.",yes,faq
+Do you offer a warranty?,,"All bags come with a 1-year warranty against stitching and zip defects. Normal wear and tear is not covered.",yes,faq
+Can I customise a bag?,,"Yes. We offer monograms, logo embossing and colour choices on most items. Custom orders take 5 to 7 working days.",yes,faq
+Where are you located?,,"Our workshop and showroom are in Lekki Phase 1, Lagos. Visits are by appointment, so tell us when you would like to come.",yes,faq
+What are your opening hours?,,"Monday to Saturday, 9am to 6pm. We are closed on Sundays and public holidays. You can message us any time and we reply during opening hours.",yes,faq
+Do you do bulk or corporate orders?,,"Yes. For 5 or more items we offer bulk pricing and branded gift sets. A team member will confirm the quote, so please share the quantity and deadline.",yes,faq
+Can I speak to a person?,,"Of course. Say so in the chat and a team member will take over.",yes,faq

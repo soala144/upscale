@@ -65,7 +65,7 @@ export function KnowledgePage() {
     if (!parsed.length) return setImportMsg("No rows to import.");
     try {
       const result = await importKnowledge(parsed);
-      setImportMsg(`Imported ${result.created} product${result.created === 1 ? "" : "s"}.`);
+      setImportMsg(`Imported ${result.created} entr${result.created === 1 ? "y" : "ies"}.`);
       setCsv("");
       await load();
     } catch (reason) { setImportMsg(msg(reason, "We couldn't import these rows.")); }
@@ -78,7 +78,7 @@ export function KnowledgePage() {
         description="What your assistant knows about your business. It answers prices, products and policies only from what you add here."
         actions={
           <div className="flex gap-2">
-            {tab === "PRODUCT" ? <Button variant="secondary" onClick={() => { setImportMsg(""); setImportOpen(true); }}><Upload className="h-4 w-4" aria-hidden="true" /> Import CSV</Button> : null}
+            <Button variant="secondary" onClick={() => { setImportMsg(""); setImportOpen(true); }}><Upload className="h-4 w-4" aria-hidden="true" /> Import CSV</Button>
             <Button onClick={() => { setFormError(""); setDraft(blank(tab)); }}><Plus className="h-4 w-4" aria-hidden="true" /> {tab === "PRODUCT" ? "Add product" : "Add FAQ"}</Button>
           </div>
         }
@@ -136,7 +136,7 @@ export function KnowledgePage() {
         ) : null}
       </Dialog>
 
-      <Dialog open={importOpen} onClose={() => setImportOpen(false)} title="Import products from CSV" description="Paste rows from a spreadsheet. First row must be the header: name, price, description (optional: available)." wide>
+      <Dialog open={importOpen} onClose={() => setImportOpen(false)} title="Import from CSV" description="Paste rows from a spreadsheet. Header: name, price, description (optional: available, type). Use type = faq for questions, with the question in name and the answer in description." wide>
         <div className="grid gap-4">
           <TextArea label="CSV" name="k-csv" value={csv} onChange={(e) => setCsv(e.target.value)} className="min-h-40 font-mono text-xs" placeholder={"name,price,description\nBlue sneakers,25000,Size 40-45 in stock"} />
           {importMsg ? <InlineNotice tone={importMsg.startsWith("Imported") ? "success" : "danger"}>{importMsg}</InlineNotice> : null}

@@ -55,3 +55,11 @@ test("csv import parses quotes, currency symbols and reports bad rows", () => {
   assert.match(problems[0], /Row 3/);
   assert.match(csvToProducts("a,b\n1,2").problems[0], /header/);
 });
+
+test("csv import supports FAQ rows through the type column", () => {
+  const { items, problems } = csvToProducts("name,price,description,type\nDelivery time?,,2 days,faq\nBag,1000,Nice,product\n");
+  assert.deepEqual(problems, []);
+  assert.equal(items[0].kind, "FAQ");
+  assert.equal(items[0].price, null);
+  assert.equal(items[1].kind, "PRODUCT");
+});
