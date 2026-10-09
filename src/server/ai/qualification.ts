@@ -1,5 +1,6 @@
 import "server-only";
 
+import { APIError } from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 
 import { getServerEnv } from "@/lib/env/server";
@@ -104,6 +105,9 @@ export async function generateQualificationReply(input: {
       model,
       durationMs,
       errorName,
+      // Provider status and code (e.g. 429 insufficient_quota) contain no secrets.
+      providerStatus: error instanceof APIError ? (error.status ?? null) : null,
+      providerCode: error instanceof APIError ? (error.code ?? null) : null,
     });
     trackEvent("ai.request.failed", {
       ...eventContext,
