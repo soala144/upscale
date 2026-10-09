@@ -449,8 +449,8 @@ export function OnboardingWizard() {
 
         {step === "bachs" ? (
           <div className="max-w-xl">
-            <h2 className="text-xl font-semibold">Connect your Bachs account</h2>
-            <p className="mb-6 mt-1 text-sm text-muted">Customer payments go to your business’s own Bachs account. UPSCALE does not collect them on your behalf.</p>
+            <h2 className="text-xl font-semibold">Connect your Bachs account <span className="ml-2 align-middle text-xs font-medium text-muted">Optional</span></h2>
+            <p className="mb-6 mt-1 text-sm text-muted">Customer payments go to your business’s own Bachs account. UPSCALE does not collect them on your behalf. You can skip this now and connect later from Integrations; it is only needed to request payments from customers.</p>
             <div className="rounded-xl border border-border bg-surface-muted p-4">
               <div className="flex items-center justify-between gap-4">
                 <div><p className="font-semibold">Bachs</p><p className="mt-1 text-sm text-muted">{bachs?.status === "READY" || bachs?.status === "CONNECTED" ? "Ready to receive customer payments." : bachs?.status === "ONBOARDING" ? "Finish account setup to accept payments." : "Connect an account to request customer payments."}</p></div>
@@ -462,7 +462,7 @@ export function OnboardingWizard() {
               <Button variant="secondary" onClick={() => setStep("plan")}><ArrowLeft className="h-4 w-4" /> Back</Button>
               <div className="flex flex-col gap-2 sm:flex-row">
                 {bachs?.status !== "READY" && bachs?.status !== "CONNECTED" ? <Button onClick={startBachs} disabled={Boolean(busy)}>{busy === "bachs" ? <><LoaderCircle className="h-4 w-4 animate-spin" /> Connecting...</> : <>Connect Bachs <ArrowRight className="h-4 w-4" /></>}</Button> : null}
-                <Button variant="secondary" onClick={() => setStep("telegram")}>Continue <ArrowRight className="h-4 w-4" /></Button>
+                <Button variant="secondary" onClick={() => setStep("telegram")}>{bachs?.status === "READY" || bachs?.status === "CONNECTED" ? "Continue" : "Skip for now"} <ArrowRight className="h-4 w-4" /></Button>
               </div>
             </div>
           </div>

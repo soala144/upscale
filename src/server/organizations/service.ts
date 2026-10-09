@@ -152,11 +152,9 @@ export async function getOrganization(
         { key: "telegram", status: telegramConnected ? "complete" : "pending" },
         { key: "bachs", status: bachsConnected ? "complete" : "pending" },
       ],
-      currentStep: !bachsConnected
-        ? "CONNECT_BACHS"
-        : !telegramConnected
-          ? "CONNECT_TELEGRAM"
-          : "COMPLETE",
+      // Bachs Connect only enables customer payments and can be set up later
+      // from Integrations, so it does not gate onboarding.
+      currentStep: !telegramConnected ? "CONNECT_TELEGRAM" : "COMPLETE",
     },
   };
 }
