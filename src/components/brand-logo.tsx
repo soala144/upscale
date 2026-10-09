@@ -7,10 +7,10 @@ export function BrandLogo() {
         <Image
           alt=""
           className="h-full w-full scale-[2] object-contain"
-          height={50}
+          height={30}
           priority
           src="/logo.png"
-          width={50}
+          width={25}
         />
       </span>
       <span className="text-sm font-extrabold tracking-[0.14em]">UPSCALE</span>
