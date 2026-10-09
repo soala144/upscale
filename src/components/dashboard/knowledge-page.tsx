@@ -58,6 +58,13 @@ export function KnowledgePage() {
     catch (reason) { setError(msg(reason, "We couldn't delete this entry.")); }
   }
 
+  async function readFile(file: File | undefined) {
+    if (!file) return;
+    if (file.size > 1_000_000) return setImportMsg("That file is larger than 1 MB.");
+    setImportMsg("");
+    setCsv(await file.text());
+  }
+
   async function runImport() {
     setImportMsg("");
     const { items: parsed, problems } = csvToProducts(csv);
@@ -138,7 +145,10 @@ export function KnowledgePage() {
 
       <Dialog open={importOpen} onClose={() => setImportOpen(false)} title="Import from CSV" description="Paste rows from a spreadsheet. Header: name, price, description (optional: available, type). Use type = faq for questions, with the question in name and the answer in description." wide>
         <div className="grid gap-4">
-          <TextArea label="CSV" name="k-csv" value={csv} onChange={(e) => setCsv(e.target.value)} className="min-h-40 font-mono text-xs" placeholder={"name,price,description\nBlue sneakers,25000,Size 40-45 in stock"} />
+          <label className="grid gap-1.5 text-sm font-medium">Upload a .csv file
+            <input type="file" accept=".csv,text/csv" onChange={(e) => void readFile(e.target.files?.[0])} className="min-h-11 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm" />
+          </label>
+          <TextArea label="Or paste rows" name="k-csv" value={csv} onChange={(e) => setCsv(e.target.value)} className="min-h-40 font-mono text-xs" placeholder={"name,price,description\nBlue sneakers,25000,Size 40-45 in stock"} />
           {importMsg ? <InlineNotice tone={importMsg.startsWith("Imported") ? "success" : "danger"}>{importMsg}</InlineNotice> : null}
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setImportOpen(false)}>Close</Button>
