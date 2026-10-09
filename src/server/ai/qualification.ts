@@ -78,7 +78,8 @@ export async function generateQualificationReply(input: {
           "lead_qualification",
         ),
       },
-      max_output_tokens: 900,
+      // Reasoning models spend part of this budget before writing the JSON reply.
+      max_output_tokens: 2500,
       store: false,
     });
 

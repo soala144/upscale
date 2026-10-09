@@ -24,6 +24,12 @@ const serverEnvironmentSchema = z
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.string().url(),
     OPENAI_API_KEY: optionalEnvironmentValue,
+    // Optional: point the OpenAI SDK at another OpenAI-compatible provider (e.g. Groq).
+    OPENAI_BASE_URL: z.preprocess(
+      (value) =>
+        typeof value === "string" && value.trim() === "" ? undefined : value,
+      z.string().url().optional(),
+    ),
     OPENAI_MODEL: z.string().trim().min(1).default("gpt-4.1-mini"),
     TELEGRAM_BOT_TOKEN_ENCRYPTION_KEY: z
       .string()

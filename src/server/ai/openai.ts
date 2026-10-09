@@ -18,13 +18,14 @@ export function getOpenAIClient(): OpenAI {
     return client;
   }
 
-  const apiKey = getServerEnv().OPENAI_API_KEY;
+  const { OPENAI_API_KEY: apiKey, OPENAI_BASE_URL: baseURL } = getServerEnv();
   if (!apiKey) {
     throw new OpenAIConfigurationError();
   }
 
   client = new OpenAI({
     apiKey,
+    ...(baseURL ? { baseURL } : {}),
     timeout: 20_000,
     maxRetries: 1,
     fetch: (input, init) => globalThis.fetch(input, init),
