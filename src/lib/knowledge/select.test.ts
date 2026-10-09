@@ -63,3 +63,9 @@ test("csv import supports FAQ rows through the type column", () => {
   assert.equal(items[0].price, null);
   assert.equal(items[1].kind, "PRODUCT");
 });
+
+test("csv import ignores the byte-order mark Excel adds", () => {
+  const { items, problems } = csvToProducts("﻿name,price,description\nBag,1000,Nice\n");
+  assert.deepEqual(problems, []);
+  assert.equal(items.length, 1);
+});
