@@ -68,3 +68,15 @@ export const getLeadConversation = async (id: string) => {
   );
   return result.conversation;
 };
+
+export const setConversationAiPaused = (leadId: string, aiPaused: boolean) =>
+  apiRequest<{ aiPaused: boolean }>(
+    `/api/leads/${encodeURIComponent(leadId)}/conversation`,
+    { method: "PATCH", body: JSON.stringify({ aiPaused }) },
+  );
+
+export const sendHumanReply = (leadId: string, content: string) =>
+  apiRequest<{ id: string; aiPaused: boolean }>(
+    `/api/leads/${encodeURIComponent(leadId)}/conversation/messages`,
+    { method: "POST", body: JSON.stringify({ content }) },
+  );

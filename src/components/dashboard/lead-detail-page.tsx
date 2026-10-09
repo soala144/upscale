@@ -11,7 +11,7 @@ import type { z } from "zod";
 import { Button, EmptyState, InlineNotice, PageHeader, Skeleton, StatusBadge } from "@/components/ui/primitives";
 import { formatNaira, stageTone } from "@/components/dashboard/overview-page";
 import { ApiError } from "@/lib/api/client";
-import { getLead, getLeadConversation, type Conversation, type Lead } from "@/lib/api/leads";
+import { getLead, getLeadConversation, sendHumanReply, setConversationAiPaused, type Conversation, type Lead } from "@/lib/api/leads";
 import { createCustomerCheckout, getPayments, type Payment } from "@/lib/api/payments";
 import { getAppointments, type Appointment } from "@/lib/api/appointments";
 import { setLeadBroadcastConsent } from "@/lib/api/broadcast";
@@ -28,6 +28,9 @@ export function LeadDetailPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [consentBusy, setConsentBusy] = useState(false);
+  const [reply, setReply] = useState("");
+  const [replyBusy, setReplyBusy] = useState(false);
+  const [replyError, setReplyError] = useState("");
   const [confirmAmount, setConfirmAmount] = useState<number | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState("");
   const [loading, setLoading] = useState(true);
@@ -66,6 +69,15 @@ export function LeadDetailPage() {
   }, [id]);
   useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
+  // Keep the transcript live so new customer messages appear while a person is replying.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      void getLeadConversation(id).then(setConversation).catch(() => undefined);
+    }, 8_000);
+    return () => clearInterval(timer);
+  }, [id]);
+
   async function requestPayment(values: ValidPaymentValues) {
     if (!lead) return;
     setConfirmAmount(values.amount);
@@ -87,6 +99,36 @@ export function LeadDetailPage() {
       setError(reason instanceof ApiError ? reason.message : "We couldn't create the checkout.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function toggleTakeover() {
+    if (!conversation || replyBusy) return;
+    setReplyBusy(true);
+    setReplyError("");
+    try {
+      const result = await setConversationAiPaused(conversation.leadId, !conversation.aiPaused);
+      setConversation({ ...conversation, aiPaused: result.aiPaused });
+      if (lead && !result.aiPaused) setLead({ ...lead, handedOff: false });
+    } catch (reason) {
+      setReplyError(reason instanceof ApiError ? (reason.serverMessage ?? reason.message) : "We couldn't change who is handling this chat.");
+    } finally {
+      setReplyBusy(false);
+    }
+  }
+
+  async function sendReply() {
+    if (!conversation || replyBusy || !reply.trim()) return;
+    setReplyBusy(true);
+    setReplyError("");
+    try {
+      await sendHumanReply(conversation.leadId, reply.trim());
+      setReply("");
+      setConversation(await getLeadConversation(id));
+    } catch (reason) {
+      setReplyError(reason instanceof ApiError ? (reason.serverMessage ?? reason.message) : "We couldn't send your reply.");
+    } finally {
+      setReplyBusy(false);
     }
   }
 
@@ -149,18 +191,37 @@ export function LeadDetailPage() {
             </dl>
           </section>
           <section className="surface-card overflow-hidden">
-            <div className="border-b border-border px-5 py-4"><h2 className="font-semibold">Conversation</h2><p className="mt-1 text-xs text-muted">{conversation ? `${conversation.channel} · ${conversation.status.toLowerCase()}` : "No conversation recorded"}</p></div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+              <div><h2 className="font-semibold">Conversation</h2><p className="mt-1 text-xs text-muted">{conversation ? `${conversation.channel} · ${conversation.status.toLowerCase()}` : "No conversation recorded"}</p></div>
+              {conversation ? (
+                <div className="flex items-center gap-2">
+                  <StatusBadge tone={conversation.aiPaused ? "warning" : "success"}>{conversation.aiPaused ? "You are handling this chat" : "AI assistant is replying"}</StatusBadge>
+                  <Button variant="secondary" disabled={replyBusy} onClick={() => void toggleTakeover()}>{conversation.aiPaused ? "Hand back to AI" : "Take over"}</Button>
+                </div>
+              ) : null}
+            </div>
             {conversation?.messages.length ? <ol className="grid gap-4 p-5">
               {conversation.messages.map((message) => {
                 const author = message.role === "USER" ? "Customer" : message.role === "ASSISTANT" ? "AI" : message.role === "HUMAN" ? "Human" : "System";
-                return <li key={message.id} className={`flex ${message.role === "ASSISTANT" ? "justify-end" : ""}`}>
-                  <article className={`max-w-[90%] rounded-xl border px-4 py-3 ${message.role === "ASSISTANT" ? "border-primary/20 bg-success-foreground" : message.role === "SYSTEM" ? "border-border bg-surface-muted" : "border-border bg-surface"}`}>
+                return <li key={message.id} className={`flex ${message.role === "ASSISTANT" || message.role === "HUMAN" ? "justify-end" : ""}`}>
+                  <article className={`max-w-[90%] rounded-xl border px-4 py-3 ${message.role === "ASSISTANT" || message.role === "HUMAN" ? "border-primary/20 bg-success-foreground" : message.role === "SYSTEM" ? "border-border bg-surface-muted" : "border-border bg-surface"}`}>
                     <div className="mb-1 flex items-center justify-between gap-6"><span className="text-xs font-semibold">{author}</span><time className="text-[11px] text-muted" dateTime={message.createdAt}>{new Date(message.createdAt).toLocaleString()}</time></div>
                     <p className="whitespace-pre-wrap break-words text-sm leading-6">{message.content}</p>
                   </article>
                 </li>;
               })}
             </ol> : <EmptyState title="No messages yet" description="Messages for this lead will appear here after the customer starts a conversation." icon={<MessageCircle className="h-5 w-5" />} />}
+            {conversation && lead.telegramUserId ? (
+              <form className="border-t border-border p-4" onSubmit={(e) => { e.preventDefault(); void sendReply(); }}>
+                {replyError ? <div className="mb-3"><InlineNotice>{replyError}</InlineNotice></div> : null}
+                <label className="sr-only" htmlFor="human-reply">Reply to customer</label>
+                <textarea id="human-reply" value={reply} onChange={(e) => setReply(e.target.value)} maxLength={4096} rows={3} placeholder={conversation.aiPaused ? "Write a reply to the customer on Telegram" : "Sending a reply pauses the AI assistant for this chat"} className="w-full resize-y rounded-lg border border-border-strong bg-surface px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15" />
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <p className="text-xs text-muted">Sent from your bot on Telegram.</p>
+                  <Button type="submit" disabled={replyBusy || !reply.trim()}>{replyBusy ? "Sending..." : "Send reply"}</Button>
+                </div>
+              </form>
+            ) : null}
           </section>
         </div>
         <aside className="grid content-start gap-4">
