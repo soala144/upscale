@@ -4,6 +4,7 @@ import { APIError } from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 
 import type { KnowledgeEntry } from "@/lib/knowledge/select";
+import { resolveAiConfig } from "@/lib/ai-config";
 import { getServerEnv } from "@/lib/env/server";
 import { captureError, trackEvent } from "@/server/integrations/watchup";
 import { getErrorName, logger } from "@/server/logging";
@@ -52,7 +53,12 @@ export async function generateQualificationReply(input: {
   knowledge?: KnowledgeEntry[];
 }): Promise<QualificationResult> {
   const startedAt = Date.now();
-  const model = getServerEnv().OPENAI_MODEL;
+  const env = getServerEnv();
+  const { model } = resolveAiConfig({
+    apiKey: env.OPENAI_API_KEY,
+    baseUrl: env.OPENAI_BASE_URL,
+    model: env.OPENAI_MODEL,
+  });
   const eventContext = {
     organizationId: input.organization.id,
     provider: "openai",

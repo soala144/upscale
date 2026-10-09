@@ -2,6 +2,7 @@ import "server-only";
 
 import OpenAI from "openai";
 
+import { resolveAiConfig } from "@/lib/ai-config";
 import { getServerEnv } from "@/lib/env/server";
 
 let client: OpenAI | undefined;
@@ -18,7 +19,12 @@ export function getOpenAIClient(): OpenAI {
     return client;
   }
 
-  const { OPENAI_API_KEY: apiKey, OPENAI_BASE_URL: baseURL } = getServerEnv();
+  const env = getServerEnv();
+  const { apiKey, baseURL } = resolveAiConfig({
+    apiKey: env.OPENAI_API_KEY,
+    baseUrl: env.OPENAI_BASE_URL,
+    model: env.OPENAI_MODEL,
+  });
   if (!apiKey) {
     throw new OpenAIConfigurationError();
   }

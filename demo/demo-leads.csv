@@ -1,0 +1,12 @@
+name,phone,email,need,budget,location,timeline,decision_maker,notes
+Ada Okafor,08010000001,ada.okafor@example.com,"3-bedroom flat to rent, with parking","₦4,500,000",Lekki,Within 2 weeks,yes,Met at the Ikoyi expo
+Tunde Bakare,08010000002,,2 large leather bags for his shop,80000,Ikeja,Next week,yes,Wants bulk discount
+Chioma Eze,+2348010000003,chioma.eze@example.com,Wedding photography package,350000,Abuja,3 months,no,Planning with her fiance
+Ibrahim Musa,08010000004,ibrahim.musa@example.com,Office space for 10 people,"₦12,000,000",Victoria Island,1 month,yes,
+Funke Adeyemi,08010000005,,Weekly catering for her salon,45000,Surulere,Starting this month,yes,Prefers calls after 4pm
+Emeka Nwosu,,emeka.nwosu@example.com,Car rental for a corporate event,150000,Port Harcourt,,no,Email only
+Zainab Lawal,08010000007,zainab.lawal@example.com,Just browsing for now,,,,,
+Segun Alabi,08010000002,,Duplicate of Tunde's phone number (should be skipped),,,,,
+No Contact Details,,,This row has no phone or email (should be reported),,,,,
+Bad Budget,08010000009,,Budget is not a number (should be reported),lots,Yaba,,,
+Grace Obi,0801 000 0010,grace.obi@example.com,Interior design for a 2-bedroom apartment,"₦2,800,000",Enugu,6 weeks,yes,Referred by Ada
