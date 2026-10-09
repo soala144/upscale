@@ -87,16 +87,27 @@ export function apiErrorResponse(error: unknown, area: string): Response {
       providerDetail: error.providerDetail ?? null,
     });
     captureError(error, area);
+    // Use 4xx for provider configuration problems: the hosting proxy replaces 5xx
+    // responses with its own HTML page, which hides the message from the user.
+    if (error.providerCode === "CONNECT_CAPABILITY_NOT_ENABLED") {
+      return Response.json(
+        {
+          error:
+            "Bachs Connect is not enabled for this platform yet. Ask Bachs to enable the Connect capability on the UPSCALE account, then try again.",
+        },
+        { status: 409 },
+      );
+    }
     if (error.status === 401 || error.status === 403) {
       return Response.json(
         { error: "Bachs rejected our API key or its permissions. Check the platform key and that Connect is enabled." },
-        { status: 502 },
+        { status: 409 },
       );
     }
     if (error.status >= 400 && error.status < 500 && error.providerDetail) {
       return Response.json(
         { error: `Bachs rejected the request: ${error.providerDetail}` },
-        { status: 400 },
+        { status: 409 },
       );
     }
     return Response.json(
