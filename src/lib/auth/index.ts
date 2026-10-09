@@ -27,12 +27,16 @@ export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   logger: {
     level: "warn",
-    log: (level, _message, ...args) => {
+    log: (level, message, ...args) => {
       const error = args.find(
         (argument): argument is Error => argument instanceof Error,
       );
       const context = {
         severity: level,
+        // Warnings are static library notices; errors stay redacted.
+        ...(level === "warn" && typeof message === "string"
+          ? { notice: message.slice(0, 200) }
+          : {}),
         ...(error ? { errorName: getErrorName(error) } : {}),
       };
 
