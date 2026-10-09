@@ -7,9 +7,28 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { authClient } from "@/lib/auth/client";
+import { getOrganization } from "@/lib/api/organizations";
 import { Button } from "@/components/ui/primitives";
 import { InlineNotice, TextInput } from "@/components/ui/primitives";
 import { createAuthFormSchema, type AuthFormValues } from "@/lib/validation/forms";
+
+/**
+ * Returning users with a finished workspace go straight to the dashboard.
+ * Any uncertainty falls back to /onboarding, which resolves the workspace itself.
+ */
+async function resolveSignInDestination() {
+  try {
+    const listed = await authClient.organization.list();
+    const organizations = listed.data ?? [];
+    if (organizations.length !== 1) return "/onboarding";
+    const activated = await authClient.organization.setActive({ organizationId: organizations[0].id });
+    if (activated.error) return "/onboarding";
+    const organization = await getOrganization(organizations[0].id);
+    return organization.onboarding?.currentStep === "COMPLETE" ? "/overview" : "/onboarding";
+  } catch {
+    return "/onboarding";
+  }
+}
 
 export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const router = useRouter();
@@ -52,7 +71,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         selectedPlan === "BASIC" || selectedPlan === "GROWTH" || selectedPlan === "SCALE"
           ? `?plan=${selectedPlan}`
           : "";
-      router.replace(`/onboarding${isSignUp ? onboardingPlan : ""}`);
+      router.replace(isSignUp ? `/onboarding${onboardingPlan}` : await resolveSignInDestination());
       router.refresh();
     } catch {
       setError("We couldn't reach the service. Check your connection and try again.");
