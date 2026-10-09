@@ -3,6 +3,7 @@ import "server-only";
 import { APIError } from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 
+import type { KnowledgeEntry } from "@/lib/knowledge/select";
 import { getServerEnv } from "@/lib/env/server";
 import { captureError, trackEvent } from "@/server/integrations/watchup";
 import { getErrorName, logger } from "@/server/logging";
@@ -48,6 +49,7 @@ export async function generateQualificationReply(input: {
   organization: OrganizationContext;
   lead: LeadContext;
   history: ConversationHistoryItem[];
+  knowledge?: KnowledgeEntry[];
 }): Promise<QualificationResult> {
   const startedAt = Date.now();
   const model = getServerEnv().OPENAI_MODEL;
@@ -64,6 +66,7 @@ export async function generateQualificationReply(input: {
       instructions: buildQualificationInstructions(
         input.organization,
         input.lead,
+        input.knowledge ?? [],
       ),
       input: input.history.map((message) => ({
         role: message.role === "USER" ? "user" : "assistant",

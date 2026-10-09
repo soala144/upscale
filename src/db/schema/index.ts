@@ -3,6 +3,7 @@ export * from "./bachs-webhook-events";
 export * from "./broadcast";
 export * from "./auth";
 export * from "./conversations";
+export * from "./knowledge";
 export * from "./leads";
 export * from "./messages";
 export * from "./organizations";

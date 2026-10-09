@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
+  BookOpen,
   CalendarDays,
   Send,
   CreditCard,
@@ -25,6 +26,7 @@ const navigation = [
   { href: "/leads", label: "Leads", icon: UsersRound },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/broadcast", label: "Broadcast", icon: Send },
+  { href: "/knowledge", label: "Knowledge", icon: BookOpen },
   { href: "/payments", label: "Payments", icon: CreditCard },
   { href: "/integrations", label: "Integrations", icon: Activity },
   { href: "/settings", label: "Settings", icon: Settings },

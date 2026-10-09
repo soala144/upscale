@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 
 import { appointments } from "./schema/appointments";
+import { knowledgeItems } from "./schema/knowledge";
 import { account, session, user, verification } from "./schema/auth";
 import {
   broadcastCampaigns,
@@ -257,7 +258,16 @@ export const appointmentRelations = relations(appointments, ({ one }) => ({
   }),
 }));
 
+export const knowledgeItemRelations = relations(knowledgeItems, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [knowledgeItems.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
 export const schema = {
+  knowledgeItems,
+  knowledgeItemRelations,
   messageTemplates,
   broadcastCampaigns,
   broadcastRecipients,

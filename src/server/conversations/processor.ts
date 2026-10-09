@@ -10,7 +10,9 @@ import { messages } from "@/db/schema/messages";
 import { organizations } from "@/db/schema/organizations";
 import { telegramUpdates } from "@/db/schema/telegram-updates";
 import { scoreLead } from "@/lib/scoring/scoreLead";
+import { selectKnowledge } from "@/lib/knowledge/select";
 import { generateQualificationReply } from "@/server/ai";
+import { getKnowledgeForPrompt } from "@/server/knowledge/service";
 import { trackEvent } from "@/server/integrations/watchup";
 
 export async function processConversationMessage(input: {
@@ -265,7 +267,19 @@ export async function processConversationMessage(input: {
     .orderBy(desc(messages.createdAt), desc(messages.id))
     .limit(20);
 
+  // Knowledge is optional context; a lookup failure must not block the reply.
+  const lastCustomerMessages = history
+    .filter((message) => message.role === "USER")
+    .slice(0, 3)
+    .map((message) => message.content)
+    .join(" ");
+  const knowledge = selectKnowledge(
+    await getKnowledgeForPrompt(input.organizationId).catch(() => []),
+    lastCustomerMessages,
+  );
+
   const qualification = await generateQualificationReply({
+    knowledge,
     organization: {
       id: organization.id,
       name: organization.name,

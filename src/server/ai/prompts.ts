@@ -1,3 +1,4 @@
+import { formatEntry, type KnowledgeEntry } from "@/lib/knowledge/select";
 import type {
   LeadContext,
   OrganizationContext,
@@ -6,6 +7,7 @@ import type {
 export function buildQualificationInstructions(
   organization: OrganizationContext,
   lead: LeadContext,
+  knowledge: KnowledgeEntry[] = [],
 ) {
   const businessContext = {
     businessName: organization.name,
@@ -32,6 +34,13 @@ export function buildQualificationInstructions(
     "Set human_requested when the customer asks to speak with a person. Set handoff_required when a human should take over for another clear reason. When either is true, acknowledge the request and do not imply you can perform the human's work.",
     `Business context: ${JSON.stringify(businessContext)}`,
     `Current lead qualification: ${JSON.stringify(currentQualification)}`,
+    knowledge.length
+      ? [
+          "Knowledge base for this business. Answer product, price and policy questions ONLY from these entries.",
+          "Quote prices exactly as listed. If something is not listed, or a product is marked unavailable, say you will check with the team and set handoff_required instead of guessing.",
+          knowledge.map(formatEntry).join("\n\n"),
+        ].join("\n")
+      : "No product or FAQ knowledge has been provided. Do not state prices or product details; offer to connect the customer with the team.",
     organization.agentPrompt
       ? `Additional business-specific agent instructions: ${organization.agentPrompt}`
       : "",
