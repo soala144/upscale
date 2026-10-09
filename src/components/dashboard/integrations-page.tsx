@@ -9,6 +9,7 @@ import type { z } from "zod";
 import { Button, Card, InlineNotice, PageHeader, Skeleton, StatusBadge, TextInput } from "@/components/ui/primitives";
 import { ApiError } from "@/lib/api/client";
 import { getBachsStatus, connectBachs, type BachsStatus } from "@/lib/api/bachs";
+import { apiRequest } from "@/lib/api/client";
 import { getHealth, type Health } from "@/lib/api/health";
 import { connectTelegram, disconnectTelegram, getTelegramStatus, type TelegramConnection } from "@/lib/api/telegram";
 import { telegramFormSchema } from "@/lib/validation/forms";
@@ -137,8 +138,53 @@ export function IntegrationsPage() {
           {health ? <div className="mt-5 grid gap-3 sm:grid-cols-3"><HealthItem label="API" healthy={health.status === "ok"} /><HealthItem label="Database" healthy={health.database === "ok"} /><div className="rounded-lg border border-border p-4"><p className="text-xs text-muted">Checked</p><p className="mt-1 text-sm font-medium">{new Date(health.timestamp).toLocaleString()}</p></div></div> : <p className="mt-5 text-sm text-muted">Health details unavailable.</p>}
           <p className="mt-4 text-xs text-muted">The backend reports whether the AI provider is configured, but does not make a live provider health request.</p>
         </Card>
+        <AiCheckCard />
       </div>
     </>
+  );
+}
+
+type AiCheck = { host: string; model: string; keyConfigured: boolean; ok: boolean; status?: number | null; code?: string | null };
+
+const aiHints: Record<string, string> = {
+  "401": "The provider rejected the API key. Check OPENAI_API_KEY has no extra spaces and matches the provider (a gsk_ key is for Groq).",
+  "404": "The model name is not available on this provider. Check OPENAI_MODEL.",
+  "429": "The provider says the account is out of credits or rate-limited. Add credits or wait.",
+  KEY_MISSING: "No OPENAI_API_KEY is set on the server. Add it and restart.",
+  NETWORK_OR_TIMEOUT: "The server could not reach the provider. Check OPENAI_BASE_URL and outbound network access.",
+};
+
+function AiCheckCard() {
+  const [result, setResult] = useState<AiCheck | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function run() {
+    setBusy(true); setError(""); setResult(null);
+    try { setResult(await apiRequest<AiCheck>("/api/ai/status", { method: "POST" })); }
+    catch (reason) { setError(message(reason)); }
+    finally { setBusy(false); }
+  }
+  const hint = result && !result.ok ? (aiHints[String(result.status)] ?? aiHints[String(result.code)] ?? "The provider returned an unexpected error.") : "";
+  return (
+    <Card className="p-5 sm:p-6 lg:col-span-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div><h2 className="font-semibold">AI assistant check</h2><p className="mt-1 text-sm text-muted">Sends one tiny test request to your AI provider and shows how it answered.</p></div>
+        <Button variant="secondary" onClick={() => void run()} disabled={busy}>{busy ? "Testing..." : "Test AI connection"}</Button>
+      </div>
+      {error ? <div className="mt-4"><InlineNotice>{error}</InlineNotice></div> : null}
+      {result ? (
+        <div className="mt-4 rounded-lg border border-border bg-surface-muted p-4 text-sm" role="status">
+          <p className="font-semibold">{result.ok ? "Working" : "Failing"}</p>
+          <dl className="mt-2 grid gap-1 text-xs text-muted sm:grid-cols-2">
+            <div>Provider host: <span className="font-mono text-foreground">{result.host}</span></div>
+            <div>Model: <span className="font-mono text-foreground">{result.model}</span></div>
+            <div>Key set: <span className="text-foreground">{result.keyConfigured ? "yes" : "no"}</span></div>
+            {!result.ok ? <div>Response: <span className="font-mono text-foreground">{result.status ?? "none"} {result.code ?? ""}</span></div> : null}
+          </dl>
+          {hint ? <p className="mt-3 text-sm text-danger">{hint}</p> : null}
+        </div>
+      ) : null}
+    </Card>
   );
 }
 
