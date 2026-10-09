@@ -83,8 +83,22 @@ export function apiErrorResponse(error: unknown, area: string): Response {
     logger.error("bachs.api.request.failed", {
       area,
       status: error.status,
+      providerCode: error.providerCode ?? null,
+      providerDetail: error.providerDetail ?? null,
     });
     captureError(error, area);
+    if (error.status === 401 || error.status === 403) {
+      return Response.json(
+        { error: "Bachs rejected our API key or its permissions. Check the platform key and that Connect is enabled." },
+        { status: 502 },
+      );
+    }
+    if (error.status >= 400 && error.status < 500 && error.providerDetail) {
+      return Response.json(
+        { error: `Bachs rejected the request: ${error.providerDetail}` },
+        { status: 400 },
+      );
+    }
     return Response.json(
       { error: "Bachs API is temporarily unavailable" },
       { status: 502 },

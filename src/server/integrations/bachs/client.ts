@@ -6,9 +6,24 @@ export class BachsApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
+    /** Bachs error_code and detail (e.g. VALIDATION_ERROR); never contains credentials. */
+    public readonly providerCode?: string,
+    public readonly providerDetail?: string,
   ) {
     super(message);
     this.name = "BachsApiError";
+  }
+}
+
+async function readProviderError(response: Response) {
+  try {
+    const body = (await response.json()) as { error_code?: unknown; detail?: unknown };
+    return {
+      code: typeof body.error_code === "string" ? body.error_code.slice(0, 60) : undefined,
+      detail: typeof body.detail === "string" ? body.detail.slice(0, 200) : undefined,
+    };
+  } catch {
+    return { code: undefined, detail: undefined };
   }
 }
 
@@ -66,7 +81,8 @@ export async function bachsRequest<T>(
   }
 
   if (!response.ok) {
-    throw new BachsApiError("Bachs checkout request failed", response.status);
+    const failure = await readProviderError(response);
+    throw new BachsApiError("Bachs checkout request failed", response.status, failure.code, failure.detail);
   }
 
   let payload: unknown;
@@ -104,7 +120,8 @@ export async function bachsGet<T>(
   }
 
   if (!response.ok) {
-    throw new BachsApiError("Bachs API request failed", response.status);
+    const failure = await readProviderError(response);
+    throw new BachsApiError("Bachs API request failed", response.status, failure.code, failure.detail);
   }
 
   let payload: unknown;

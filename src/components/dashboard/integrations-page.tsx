@@ -16,7 +16,7 @@ import { telegramFormSchema } from "@/lib/validation/forms";
 type TelegramValues = z.input<typeof telegramFormSchema>;
 
 function message(error: unknown) {
-  return error instanceof ApiError ? error.message : "We couldn't complete the integration request.";
+  return error instanceof ApiError ? (error.serverMessage ?? error.message) : "We couldn't complete the integration request.";
 }
 
 function telegramError(error: unknown) {

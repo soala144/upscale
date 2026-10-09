@@ -73,7 +73,7 @@ export async function apiRequest<T>(
     }
     const serverMessage =
       response.status >= 400 &&
-      response.status < 500 &&
+      (response.status < 500 || response.status === 502) &&
       response.status !== 401 &&
       typeof body?.error === "string"
         ? body.error
