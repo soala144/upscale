@@ -15,6 +15,8 @@ import {
 import { TelegramConnectionError } from "@/server/telegram/service";
 import { OrganizationSlugConflictError } from "@/server/organizations/service";
 import { CustomerCheckoutError } from "@/server/payments/service";
+import { BroadcastError } from "@/server/broadcast/service";
+import { AppointmentError } from "@/server/appointments/service";
 
 export function apiErrorResponse(error: unknown, area: string): Response {
   if (error instanceof OrganizationAuthorizationError) {
@@ -22,6 +24,17 @@ export function apiErrorResponse(error: unknown, area: string): Response {
       { error: error.message },
       { status: error.status },
     );
+  }
+
+  if (error instanceof AppointmentError) {
+    return Response.json(
+      { error: error.message, conflicts: error.conflicts },
+      { status: error.status },
+    );
+  }
+
+  if (error instanceof BroadcastError) {
+    return Response.json({ error: error.message }, { status: error.status });
   }
 
   if (error instanceof OrganizationSlugConflictError) {

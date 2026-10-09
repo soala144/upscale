@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
+  CalendarDays,
+  Send,
   CreditCard,
   LayoutDashboard,
   LogOut,
@@ -21,6 +23,8 @@ import { BrandLogo } from "@/components/brand-logo";
 const navigation = [
   { href: "/overview", label: "Overview", icon: LayoutDashboard },
   { href: "/leads", label: "Leads", icon: UsersRound },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
+  { href: "/broadcast", label: "Broadcast", icon: Send },
   { href: "/payments", label: "Payments", icon: CreditCard },
   { href: "/integrations", label: "Integrations", icon: Activity },
   { href: "/settings", label: "Settings", icon: Settings },

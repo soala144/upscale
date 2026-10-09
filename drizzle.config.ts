@@ -24,6 +24,8 @@ export default defineConfig({
     "./src/db/schema/leads.ts",
     "./src/db/schema/conversations.ts",
     "./src/db/schema/messages.ts",
+    "./src/db/schema/broadcast.ts",
+    "./src/db/schema/appointments.ts",
   ],
   out: "./drizzle",
   dialect: "postgresql",

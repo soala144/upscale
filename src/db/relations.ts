@@ -1,6 +1,12 @@
 import { relations } from "drizzle-orm";
 
+import { appointments } from "./schema/appointments";
 import { account, session, user, verification } from "./schema/auth";
+import {
+  broadcastCampaigns,
+  broadcastRecipients,
+  messageTemplates,
+} from "./schema/broadcast";
 import { bachsWebhookEvents } from "./schema/bachs-webhook-events";
 import { conversations } from "./schema/conversations";
 import { leads } from "./schema/leads";
@@ -196,7 +202,70 @@ export const messageRelations = relations(messages, ({ one }) => ({
   }),
 }));
 
+export const messageTemplateRelations = relations(
+  messageTemplates,
+  ({ one, many }) => ({
+    organization: one(organizations, {
+      fields: [messageTemplates.organizationId],
+      references: [organizations.id],
+    }),
+    campaigns: many(broadcastCampaigns),
+  }),
+);
+
+export const broadcastCampaignRelations = relations(
+  broadcastCampaigns,
+  ({ one, many }) => ({
+    organization: one(organizations, {
+      fields: [broadcastCampaigns.organizationId],
+      references: [organizations.id],
+    }),
+    template: one(messageTemplates, {
+      fields: [broadcastCampaigns.templateId],
+      references: [messageTemplates.id],
+    }),
+    recipients: many(broadcastRecipients),
+  }),
+);
+
+export const broadcastRecipientRelations = relations(
+  broadcastRecipients,
+  ({ one }) => ({
+    campaign: one(broadcastCampaigns, {
+      fields: [broadcastRecipients.campaignId],
+      references: [broadcastCampaigns.id],
+    }),
+    lead: one(leads, {
+      fields: [broadcastRecipients.leadId],
+      references: [leads.id],
+    }),
+  }),
+);
+
+export const appointmentRelations = relations(appointments, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [appointments.organizationId],
+    references: [organizations.id],
+  }),
+  lead: one(leads, {
+    fields: [appointments.leadId],
+    references: [leads.id],
+  }),
+  assignee: one(user, {
+    fields: [appointments.assignedToUserId],
+    references: [user.id],
+  }),
+}));
+
 export const schema = {
+  messageTemplates,
+  broadcastCampaigns,
+  broadcastRecipients,
+  appointments,
+  messageTemplateRelations,
+  broadcastCampaignRelations,
+  broadcastRecipientRelations,
+  appointmentRelations,
   user,
   session,
   account,

@@ -24,6 +24,9 @@ export class ApiError extends Error {
     message: string,
     public readonly status: number,
     public readonly code: ApiErrorCode,
+    /** Message supplied by the server for 4xx errors; safe to show to users. */
+    public readonly serverMessage?: string,
+    public readonly body?: Record<string, unknown>,
   ) {
     super(message);
     this.name = "ApiError";
@@ -62,10 +65,25 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     const code = errorCode(response.status);
+    let body: Record<string, unknown> | undefined;
+    try {
+      body = (await response.json()) as Record<string, unknown>;
+    } catch {
+      body = undefined;
+    }
+    const serverMessage =
+      response.status >= 400 &&
+      response.status < 500 &&
+      response.status !== 401 &&
+      typeof body?.error === "string"
+        ? body.error
+        : undefined;
     throw new ApiError(
       messages[code],
       response.status,
       code,
+      serverMessage,
+      body,
     );
   }
 

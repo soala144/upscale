@@ -30,6 +30,8 @@ export type Lead = {
   urgent: boolean;
   handedOff: boolean;
   notes: string | null;
+  broadcastOptedOutAt: string | null;
+  broadcastOptOutReason: string | null;
   createdAt: string;
   updatedAt: string;
 };

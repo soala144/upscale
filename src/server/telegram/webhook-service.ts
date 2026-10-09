@@ -11,6 +11,10 @@ import { telegramUpdates } from "@/db/schema/telegram-updates";
 import { decryptTelegramToken } from "@/lib/crypto/telegram-token";
 import { sendTelegramMessage } from "@/server/integrations/telegram";
 import { processConversationMessage } from "@/server/conversations/processor";
+import {
+  isStopKeyword,
+  recordTelegramOptOut,
+} from "@/server/broadcast/service";
 import type { telegramUpdateSchema } from "@/lib/validation/telegram";
 import type { z } from "zod";
 
@@ -211,6 +215,11 @@ export async function processTelegramUpdate(
       content: message.text,
       updateReceiptId: receipt.id,
     });
+
+    if (isStopKeyword(message.text)) {
+      // The lead exists by now, so the opt-out is recorded even on a first message.
+      await recordTelegramOptOut(connection.organizationId, String(message.from.id));
+    }
 
     if (!processed.reply || processed.paused) {
       await completeUpdate(receipt.id);

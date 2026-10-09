@@ -33,6 +33,11 @@ const serverEnvironmentSchema = z
     BACHS_ENV: z.enum(["sandbox", "production"]).default("sandbox"),
     WATCHUP_API_KEY: optionalEnvironmentValue,
     WATCHUP_PROJECT_ID: optionalEnvironmentValue,
+    BROADCAST_WORKER_SECRET: z.preprocess(
+      (value) =>
+        typeof value === "string" && value.trim() === "" ? undefined : value,
+      z.string().trim().min(24).optional(),
+    ),
   })
   .superRefine((env, context) => {
     if (env.NODE_ENV === "production" && !env.WATCHUP_API_KEY) {

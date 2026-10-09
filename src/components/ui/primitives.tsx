@@ -3,6 +3,7 @@ import type {
   HTMLAttributes,
   InputHTMLAttributes,
   ReactNode,
+  SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
 import { AlertCircle, CheckCircle2, Info, LoaderCircle } from "lucide-react";
@@ -257,5 +258,74 @@ export function Skeleton({
       className={`animate-pulse rounded-md bg-surface-muted ${className}`}
       aria-hidden="true"
     />
+  );
+}
+
+export function SelectInput({
+  label,
+  error,
+  className = "",
+  id,
+  children,
+  ...props
+}: SelectHTMLAttributes<HTMLSelectElement> & { label: string; error?: string }) {
+  const inputId = id ?? props.name;
+  return (
+    <div className="grid gap-1.5">
+      <label className="text-sm font-medium text-foreground" htmlFor={inputId}>
+        {label}
+      </label>
+      <select
+        id={inputId}
+        className={`min-h-11 w-full rounded-lg border ${error ? "border-danger" : "border-border-strong"} bg-surface px-3 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 ${className}`}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${inputId}-error` : undefined}
+        {...props}
+      >
+        {children}
+      </select>
+      {error ? (
+        <span id={`${inputId}-error`} className="text-xs text-danger" role="alert">
+          {error}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+export function SectionCard({
+  title,
+  description,
+  action,
+  children,
+  className = "",
+}: {
+  title: string;
+  description?: string;
+  action?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={`surface-card min-w-0 ${className}`}>
+      <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
+        <div className="min-w-0">
+          <h2 className="font-semibold">{title}</h2>
+          {description ? <p className="mt-0.5 text-xs text-muted">{description}</p> : null}
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** Shown in place of a section's data when its query failed (distinct from zero). */
+export function SectionError({ label }: { label: string }) {
+  return (
+    <div className="px-5 py-8 text-center" role="alert">
+      <p className="text-sm font-semibold text-danger">Couldn&apos;t load {label}</p>
+      <p className="mt-1 text-xs text-muted">This is a loading problem, not an empty result. Try refreshing.</p>
+    </div>
   );
 }

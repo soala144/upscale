@@ -50,6 +50,10 @@ export const leads = pgTable(
     summary: text("summary"),
     urgent: boolean("urgent").notNull().default(false),
     handedOff: boolean("handed_off").notNull().default(false),
+    broadcastOptedOutAt: timestamp("broadcast_opted_out_at", {
+      withTimezone: true,
+    }),
+    broadcastOptOutReason: text("broadcast_opt_out_reason"),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

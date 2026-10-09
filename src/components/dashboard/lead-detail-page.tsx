@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, ExternalLink, MessageCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, CalendarPlus, ExternalLink, MessageCircle, RefreshCw } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -13,6 +13,8 @@ import { formatNaira, stageTone } from "@/components/dashboard/overview-page";
 import { ApiError } from "@/lib/api/client";
 import { getLead, getLeadConversation, type Conversation, type Lead } from "@/lib/api/leads";
 import { createCustomerCheckout, getPayments, type Payment } from "@/lib/api/payments";
+import { getAppointments, type Appointment } from "@/lib/api/appointments";
+import { setLeadBroadcastConsent } from "@/lib/api/broadcast";
 import { paymentFormSchema } from "@/lib/validation/forms";
 
 type PaymentValues = z.input<typeof paymentFormSchema>;
@@ -24,6 +26,8 @@ export function LeadDetailPage() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [consentBusy, setConsentBusy] = useState(false);
   const [confirmAmount, setConfirmAmount] = useState<number | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState("");
   const [loading, setLoading] = useState(true);
@@ -52,6 +56,8 @@ export function LeadDetailPage() {
       setLead(leadResult);
       setConversation(conversationResult);
       setPayments(paymentResult.filter((payment) => payment.leadId === id));
+      // Appointments are secondary: a failure here must not hide the lead.
+      setAppointments(await getAppointments({ leadId: id }).then((r) => r.appointments).catch(() => []));
     } catch (reason) {
       setError(reason instanceof ApiError ? reason.message : "We couldn't load this lead.");
     } finally {
@@ -81,6 +87,19 @@ export function LeadDetailPage() {
       setError(reason instanceof ApiError ? reason.message : "We couldn't create the checkout.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function toggleConsent() {
+    if (!lead || consentBusy) return;
+    setConsentBusy(true);
+    try {
+      const result = await setLeadBroadcastConsent(lead.id, !lead.broadcastOptedOutAt);
+      setLead({ ...lead, broadcastOptedOutAt: result.optedOut ? new Date().toISOString() : null });
+    } catch (reason) {
+      setError(reason instanceof ApiError ? (reason.serverMessage ?? reason.message) : "We couldn't update broadcast consent.");
+    } finally {
+      setConsentBusy(false);
     }
   }
 
@@ -145,6 +164,29 @@ export function LeadDetailPage() {
           </section>
         </div>
         <aside className="grid content-start gap-4">
+          <section className="surface-card p-5">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-semibold">Appointments</h2>
+              <Link className="inline-flex min-h-9 items-center gap-1.5 text-sm font-semibold text-primary hover:underline" href={`/calendar?new=1&leadId=${encodeURIComponent(lead.id)}`}><CalendarPlus className="h-4 w-4" aria-hidden="true" /> Schedule</Link>
+            </div>
+            {appointments.length ? (
+              <ul className="mt-3 grid gap-2">
+                {appointments.map((appointment) => (
+                  <li key={appointment.id}>
+                    <Link className="block rounded-lg border border-border px-3 py-2 hover:bg-surface-muted" href={`/calendar?appointment=${encodeURIComponent(appointment.id)}`}>
+                      <p className="truncate text-sm font-semibold">{appointment.title}</p>
+                      <p className="mt-0.5 flex items-center justify-between gap-2 text-xs text-muted"><span>{new Date(appointment.startsAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</span><span>{appointment.status.replaceAll("_", " ").toLowerCase()}</span></p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="mt-3 text-sm text-muted">No appointments yet.</p>}
+          </section>
+          <section className="surface-card p-5">
+            <h2 className="font-semibold">Broadcast consent</h2>
+            <p className="mt-2 text-sm text-muted">{lead.broadcastOptedOutAt ? "This contact has opted out and is excluded from broadcasts." : "This contact can receive broadcasts."}</p>
+            <Button className="mt-3" variant="secondary" disabled={consentBusy} onClick={() => void toggleConsent()}>{lead.broadcastOptedOutAt ? "Allow broadcasts" : "Opt out of broadcasts"}</Button>
+          </section>
           <section className="surface-card p-5">
             <h2 className="font-semibold">Payment</h2>
             {paid ? (
